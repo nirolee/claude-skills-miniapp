@@ -35,49 +35,28 @@ sudo chown $USER:$USER /var/www/claude-skills-miniapp
 
 #### 配置 Supervisor（管理 API 服务）
 
-创建配置文件 `/etc/supervisor/conf.d/claude-skills-api.conf`：
-```ini
-[program:claude-skills-api]
-command=/var/www/claude-skills-miniapp/backend/venv/bin/python -m uvicorn src.api.main:app --host 0.0.0.0 --port 8000
-directory=/var/www/claude-skills-miniapp/backend
-user=www-data
-autostart=true
-autorestart=true
-redirect_stderr=true
-stdout_logfile=/var/log/claude-skills-api.log
-environment=PATH="/var/www/claude-skills-miniapp/backend/venv/bin"
-```
-
-重启 Supervisor：
+使用项目自带的配置文件：
 ```bash
+sudo cp /var/www/claude-skills-miniapp/deploy/claude-skills-api.conf /etc/supervisor/conf.d/
 sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl start claude-skills-api
 ```
 
+查看服务状态：
+```bash
+sudo supervisorctl status claude-skills-api
+```
+
+**注意**：配置文件位于 `deploy/claude-skills-api.conf`，可根据实际需求修改。
+
 #### 配置 Nginx（反向代理）
 
-创建配置 `/etc/nginx/sites-available/claude-skills`：
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;  # 替换为实际域名
-
-    # API 代理
-    location /api/ {
-        proxy_pass http://127.0.0.1:8000/api/;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # 前端静态资源（如果使用 H5）
-    location / {
-        root /var/www/claude-skills-miniapp/frontend;
-        try_files $uri $uri/ /index.html;
-    }
-}
+使用项目自带的配置文件：
+```bash
+sudo cp /var/www/claude-skills-miniapp/deploy/nginx-claude-skills.conf /etc/nginx/sites-available/claude-skills
+# 修改配置中的域名
+sudo nano /etc/nginx/sites-available/claude-skills
 ```
 
 启用配置：
@@ -86,6 +65,8 @@ sudo ln -s /etc/nginx/sites-available/claude-skills /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
+
+**注意**：配置文件位于 `deploy/nginx-claude-skills.conf`，需要修改 `server_name` 为实际域名或 IP。
 
 ### 4. 设置定时任务（爬虫）
 
