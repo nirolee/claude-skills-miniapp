@@ -22,20 +22,21 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/claude-skills-miniapp
-
-            # 如果目录为空，先克隆仓库
-            if [ ! -d ".git" ]; then
+            # 如果目录不存在，先克隆仓库
+            if [ ! -d "/var/www/claude-skills-miniapp/.git" ]; then
               echo "首次部署，克隆仓库..."
               cd /var/www
               rm -rf claude-skills-miniapp
-              git clone https://github.com/${{ github.repository }}.git claude-skills-miniapp
+              git clone git@github.com:${{ github.repository }}.git claude-skills-miniapp
               cd claude-skills-miniapp
             else
               echo "更新代码..."
+              cd /var/www/claude-skills-miniapp
               git fetch origin
               git reset --hard origin/main || git reset --hard origin/master
             fi
+
+            cd /var/www/claude-skills-miniapp
 
             # 进入后端目录
             cd backend
