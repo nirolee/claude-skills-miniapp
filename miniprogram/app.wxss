@@ -1,0 +1,210 @@
+/* Terminal Cyberpunk Theme - Global Styles */
+page {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #1a1f35;
+  --bg-card: #141928;
+  --neon-cyan: #00d9ff;
+  --neon-purple: #a855f7;
+  --neon-pink: #f472b6;
+  --terminal-green: #00ff88;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: rgba(0, 217, 255, 0.3);
+  --glow-cyan: 0 0 20px rgba(0, 217, 255, 0.5);
+  --glow-purple: 0 0 20px rgba(168, 85, 247, 0.5);
+
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Courier New', Consolas, Monaco, monospace;
+  font-size: 28rpx;
+  line-height: 1.6;
+}
+
+/* Reset */
+view, text, button, input {
+  box-sizing: border-box;
+}
+
+/* Container */
+.container {
+  padding: 32rpx;
+  min-height: 100vh;
+}
+
+/* Card */
+.card {
+  background: var(--bg-card);
+  border-radius: 16rpx;
+  padding: 32rpx;
+  margin-bottom: 24rpx;
+  border: 2rpx solid var(--border-color);
+  box-shadow: var(--glow-cyan);
+  transition: all 0.3s ease;
+}
+
+.card:active {
+  transform: translateY(-4rpx);
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.8);
+}
+
+/* Neon Button */
+.btn-neon {
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  color: #fff;
+  border: none;
+  border-radius: 12rpx;
+  padding: 24rpx 48rpx;
+  font-weight: bold;
+  font-size: 28rpx;
+  box-shadow: var(--glow-cyan);
+  transition: all 0.3s ease;
+}
+
+.btn-neon:active {
+  transform: scale(0.95);
+  box-shadow: 0 0 30px rgba(0, 217, 255, 0.8);
+}
+
+/* Terminal Header */
+.terminal-header {
+  background: var(--bg-secondary);
+  border: 2rpx solid var(--neon-cyan);
+  border-radius: 12rpx;
+  padding: 24rpx;
+  margin-bottom: 32rpx;
+  box-shadow: var(--glow-cyan);
+}
+
+.terminal-prompt {
+  color: var(--terminal-green);
+  font-size: 24rpx;
+  margin-bottom: 8rpx;
+}
+
+.terminal-title {
+  color: var(--neon-cyan);
+  font-size: 36rpx;
+  font-weight: bold;
+  text-shadow: var(--glow-cyan);
+}
+
+/* Tag */
+.tag {
+  display: inline-block;
+  padding: 8rpx 16rpx;
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  margin-right: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.tag-cyan {
+  background: rgba(0, 217, 255, 0.2);
+  color: var(--neon-cyan);
+  border: 1rpx solid var(--neon-cyan);
+}
+
+.tag-purple {
+  background: rgba(168, 85, 247, 0.2);
+  color: var(--neon-purple);
+  border: 1rpx solid var(--neon-purple);
+}
+
+.tag-green {
+  background: rgba(0, 255, 136, 0.2);
+  color: var(--terminal-green);
+  border: 1rpx solid var(--terminal-green);
+}
+
+/* Text Utilities */
+.text-primary {
+  color: var(--text-primary);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-cyan {
+  color: var(--neon-cyan);
+}
+
+.text-purple {
+  color: var(--neon-purple);
+}
+
+.text-green {
+  color: var(--terminal-green);
+}
+
+/* Flex Utilities */
+.flex {
+  display: flex;
+}
+
+.flex-column {
+  flex-direction: column;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.align-center {
+  align-items: center;
+}
+
+.flex-1 {
+  flex: 1;
+}
+
+/* Glow Effects */
+.glow-cyan {
+  box-shadow: var(--glow-cyan);
+}
+
+.glow-purple {
+  box-shadow: var(--glow-purple);
+}
+
+/* Loading Animation */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.loading {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Scanline Effect */
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+.scanline-effect::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 4rpx;
+  background: linear-gradient(to bottom, transparent, var(--neon-cyan), transparent);
+  animation: scanline 8s linear infinite;
+  pointer-events: none;
+  z-index: 9999;
+}

@@ -1,0 +1,63 @@
+{
+  "pages": [
+    {
+      "path": "pages/index/index",
+      "style": {
+        "navigationBarTitleText": "Claude Skills",
+        "navigationBarBackgroundColor": "#0a0e1a",
+        "navigationBarTextStyle": "white",
+        "enablePullDownRefresh": true
+      }
+    },
+    {
+      "path": "pages/detail/detail",
+      "style": {
+        "navigationBarTitleText": "技能详情",
+        "navigationBarBackgroundColor": "#0a0e1a",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/search/search",
+      "style": {
+        "navigationBarTitleText": "搜索技能",
+        "navigationBarBackgroundColor": "#0a0e1a",
+        "navigationBarTextStyle": "white"
+      }
+    },
+    {
+      "path": "pages/profile/profile",
+      "style": {
+        "navigationBarTitleText": "个人中心",
+        "navigationBarBackgroundColor": "#0a0e1a",
+        "navigationBarTextStyle": "white"
+      }
+    }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "white",
+    "navigationBarTitleText": "Claude Skills",
+    "navigationBarBackgroundColor": "#0a0e1a",
+    "backgroundColor": "#0a0e1a"
+  },
+  "tabBar": {
+    "color": "#7e8ba3",
+    "selectedColor": "#00d9ff",
+    "backgroundColor": "#0f1729",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "首页"
+      },
+      {
+        "pagePath": "pages/search/search",
+        "text": "搜索"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
+      }
+    ]
+  }
+}

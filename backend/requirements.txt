@@ -1,0 +1,19 @@
+# FastAPI 核心
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+pydantic==2.5.3
+pydantic-settings==2.1.0
+
+# 数据库
+sqlalchemy==2.0.25
+aiomysql==0.2.0
+pymysql==1.1.0
+
+# 爬虫
+playwright==1.41.0
+
+# HTTP 客户端（可选，用于 GitHub API）
+httpx==0.26.0
+
+# 工具
+python-dotenv==1.0.0

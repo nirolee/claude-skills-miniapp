@@ -1,0 +1,133 @@
+<!--index.wxml-->
+<view class="page">
+  <!-- Terminal Header -->
+  <view class="terminal-header">
+    <view class="header-content">
+      <view class="terminal-prompt">
+        <text class="prompt-symbol">></text>
+        <text class="prompt-text">claude-skills</text>
+        <text class="terminal-cursor"></text>
+      </view>
+      <view class="header-stats">
+        <view class="stat-item">
+          <text class="stat-value">{{totalSkills}}</text>
+          <text class="stat-label">skills</text>
+        </view>
+        <view class="stat-divider"></view>
+        <view class="stat-item">
+          <text class="stat-value">{{onlineUsers}}</text>
+          <text class="stat-label">online</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Category Filter -->
+  <scroll-view scroll-x class="category-scroll">
+    <view class="category-container">
+      <view
+        wx:for="{{categories}}"
+        wx:key="id"
+        class="category-chip {{selectedCategory === item.id ? 'active' : ''}}"
+        bindtap="selectCategory"
+        data-id="{{item.id}}"
+      >
+        <text class="category-icon">{{item.icon}}</text>
+        <text class="category-name">{{item.name}}</text>
+      </view>
+    </view>
+  </scroll-view>
+
+  <!-- Skills List -->
+  <scroll-view
+    scroll-y
+    class="skills-container"
+    bindscrolltolower="loadMore"
+    refresher-enabled
+    bindrefresherrefresh="onRefresh"
+    refresher-triggered="{{refreshing}}"
+  >
+    <view
+      wx:for="{{skills}}"
+      wx:key="id"
+      class="skill-card"
+      bindtap="goToDetail"
+      data-id="{{item.id}}"
+    >
+      <!-- Card Header -->
+      <view class="card-header">
+        <view class="skill-meta">
+          <image src="{{item.authorAvatar}}" class="author-avatar" mode="aspectFill" />
+          <view class="meta-info">
+            <text class="author-name">{{item.author}}</text>
+            <text class="skill-category">{{item.category}}</text>
+          </view>
+        </view>
+        <view class="skill-badge badge-{{item.badgeType}}">
+          {{item.badge}}
+        </view>
+      </view>
+
+      <!-- Skill Title -->
+      <view class="skill-title-row">
+        <text class="terminal-prefix">$</text>
+        <text class="skill-name">{{item.name}}</text>
+      </view>
+
+      <!-- Skill Description -->
+      <text class="skill-description">{{item.description}}</text>
+
+      <!-- Skill Tags -->
+      <view class="skill-tags">
+        <view wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="tag">
+          #{{tag}}
+        </view>
+      </view>
+
+      <!-- Card Footer -->
+      <view class="card-footer">
+        <view class="stats">
+          <view class="stat">
+            <text class="icon-star">⭐</text>
+            <text class="stat-text">{{item.stars}}</text>
+          </view>
+          <view class="stat">
+            <text class="icon-fork">🔱</text>
+            <text class="stat-text">{{item.forks}}</text>
+          </view>
+          <view class="stat">
+            <text class="icon-download">📥</text>
+            <text class="stat-text">{{item.downloads}}</text>
+          </view>
+        </view>
+        <view class="action-btn" bindtap="toggleFavorite" data-id="{{item.id}}" catch:tap="stopPropagation">
+          <text class="icon-heart {{item.isFavorited ? 'favorited' : ''}}">
+            {{item.isFavorited ? '❤️' : '🤍'}}
+          </text>
+        </view>
+      </view>
+
+      <!-- Glow Effect -->
+      <view class="card-glow"></view>
+    </view>
+
+    <!-- Loading More -->
+    <view wx:if="{{loading}}" class="loading-container">
+      <view class="loading-spinner"></view>
+      <text class="loading-text">Loading more skills...</text>
+    </view>
+
+    <!-- Empty State -->
+    <view wx:if="{{!loading && skills.length === 0}}" class="empty-state">
+      <text class="empty-icon">🔍</text>
+      <text class="empty-text">No skills found</text>
+      <text class="empty-hint">Try adjusting your filters</text>
+    </view>
+  </scroll-view>
+
+  <!-- Floating Action Button -->
+  <view class="fab" bindtap="scrollToTop">
+    <text class="fab-icon">↑</text>
+    <view class="fab-glow"></view>
+  </view>
+</view>

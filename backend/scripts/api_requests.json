@@ -1,0 +1,206 @@
+[
+  {
+    "url": "https://skillsmp.com/zh/skills/langgenius-dify-claude-skills-skill-creator-skill-md?_rsc=eqsja",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-prefetch": "1",
+      "next-router-segment-prefetch": "/_tree",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-b2e3592a22d23574-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/langgenius-dify-claude-skills-frontend-testing-skill-md?_rsc=eqsja",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-prefetch": "1",
+      "next-router-segment-prefetch": "/_tree",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-b48a5c3b13c856c0-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/vercel-next-js-claude-plugin-plugins-cache-components-skills-cache-components-skill-md?_rsc=eqsja",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-prefetch": "1",
+      "next-router-segment-prefetch": "/_tree",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-972d4ca84fb1b3fb-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/langgenius-dify-claude-skills-skill-creator-skill-md?_rsc=6llzx",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-state-tree": "%5B%22%22%2C%7B%22children%22%3A%5B%5B%22locale%22%2C%22zh%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22skills%22%2C%7B%22children%22%3A%5B%5B%22id%22%2C%22langgenius-dify-claude-skills-skill-creator-skill-md%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2C%22refetch%22%2Cfalse%5D%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
+      "next-router-prefetch": "1",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-96fdd690afe11697-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/langgenius-dify-claude-skills-frontend-testing-skill-md?_rsc=1sj9i",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-state-tree": "%5B%22%22%2C%7B%22children%22%3A%5B%5B%22locale%22%2C%22zh%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22skills%22%2C%7B%22children%22%3A%5B%5B%22id%22%2C%22langgenius-dify-claude-skills-frontend-testing-skill-md%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2C%22refetch%22%2Cfalse%5D%7D%2Cnull%2C%22inside-shared-layout%22%2Cfalse%5D%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
+      "next-router-prefetch": "1",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-b4be1fde455717dc-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/vercel-next-js-claude-plugin-plugins-cache-components-skills-cache-components-skill-md?_rsc=gm5nn",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-state-tree": "%5B%22%22%2C%7B%22children%22%3A%5B%5B%22locale%22%2C%22zh%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22skills%22%2C%7B%22children%22%3A%5B%5B%22id%22%2C%22vercel-next-js-claude-plugin-plugins-cache-components-skills-cache-components-skill-md%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2C%22refetch%22%2Cfalse%5D%7D%2Cnull%2C%22inside-shared-layout%22%2Cfalse%5D%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
+      "next-router-prefetch": "1",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-a5852ad54250889d-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/electron-electron-claude-skills-electron-chromium-upgrade-skill-md?_rsc=eqsja",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-prefetch": "1",
+      "next-router-segment-prefetch": "/_tree",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-987c0a394e5e9004-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/langgenius-dify-claude-skills-component-refactoring-skill-md?_rsc=eqsja",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-prefetch": "1",
+      "next-router-segment-prefetch": "/_tree",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-829855c70543f3cc-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/langgenius-dify-claude-skills-frontend-code-review-skill-md?_rsc=eqsja",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-prefetch": "1",
+      "next-router-segment-prefetch": "/_tree",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-b5e98b3a7c7fe240-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/electron-electron-claude-skills-electron-chromium-upgrade-skill-md?_rsc=gg1x7",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-state-tree": "%5B%22%22%2C%7B%22children%22%3A%5B%5B%22locale%22%2C%22zh%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22skills%22%2C%7B%22children%22%3A%5B%5B%22id%22%2C%22electron-electron-claude-skills-electron-chromium-upgrade-skill-md%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2C%22refetch%22%2Cfalse%5D%7D%2Cnull%2C%22inside-shared-layout%22%2Cfalse%5D%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
+      "next-router-prefetch": "1",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-97f1e12644c5266d-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/langgenius-dify-claude-skills-component-refactoring-skill-md?_rsc=1s2b8",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-state-tree": "%5B%22%22%2C%7B%22children%22%3A%5B%5B%22locale%22%2C%22zh%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22skills%22%2C%7B%22children%22%3A%5B%5B%22id%22%2C%22langgenius-dify-claude-skills-component-refactoring-skill-md%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2C%22refetch%22%2Cfalse%5D%7D%2Cnull%2C%22inside-shared-layout%22%2Cfalse%5D%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
+      "next-router-prefetch": "1",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-8870c1d3ab96dbb3-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  },
+  {
+    "url": "https://skillsmp.com/zh/skills/langgenius-dify-claude-skills-frontend-code-review-skill-md?_rsc=99378",
+    "method": "GET",
+    "headers": {
+      "sec-ch-ua": "\"Chromium\";v=\"121\", \"Not A(Brand\";v=\"99\"",
+      "next-router-state-tree": "%5B%22%22%2C%7B%22children%22%3A%5B%5B%22locale%22%2C%22zh%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22skills%22%2C%7B%22children%22%3A%5B%5B%22id%22%2C%22langgenius-dify-claude-skills-frontend-code-review-skill-md%22%2C%22d%22%5D%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2C%22refetch%22%2Cfalse%5D%7D%2Cnull%2C%22inside-shared-layout%22%2Cfalse%5D%7D%2Cnull%2Cnull%2Cfalse%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
+      "next-router-prefetch": "1",
+      "sec-ch-ua-mobile": "?0",
+      "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+      "next-url": "/zh",
+      "referer": "https://skillsmp.com/zh",
+      "baggage": "sentry-environment=production,sentry-public_key=27ec0de6f90d7403ed57f5f5de444d5c,sentry-trace_id=3a1efbc82ed7410b89a60d283c1f57fa,sentry-org_id=983065,sentry-sampled=false,sentry-sample_rand=0.40181675707695064,sentry-sample_rate=0.1",
+      "sentry-trace": "3a1efbc82ed7410b89a60d283c1f57fa-a4a0cd8c9b45e8a0-0",
+      "rsc": "1",
+      "sec-ch-ua-platform": "\"Windows\""
+    }
+  }
+]

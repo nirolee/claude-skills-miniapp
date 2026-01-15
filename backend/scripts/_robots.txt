@@ -1,0 +1,18 @@
+User-Agent: Mediapartners-Google
+Allow: /
+
+User-Agent: AdsBot-Google
+Allow: /
+
+User-Agent: GoogleAdSenseInfeed
+Allow: /
+
+User-Agent: Google-Display-Ads-Bot
+Allow: /
+
+User-Agent: *
+Allow: /
+Disallow: /api/
+Disallow: /auth/
+
+Sitemap: https://skillsmp.com/sitemap.xml

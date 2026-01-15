@@ -1,0 +1,122 @@
+name: 部署到 223 服务器
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  deploy-backend:
+    name: 部署后端
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 部署后端到服务器
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            cd /var/www/claude-skills-miniapp
+
+            # 如果目录为空，先克隆仓库
+            if [ ! -d ".git" ]; then
+              echo "首次部署，克隆仓库..."
+              cd /var/www
+              rm -rf claude-skills-miniapp
+              git clone https://github.com/${{ github.repository }}.git claude-skills-miniapp
+              cd claude-skills-miniapp
+            else
+              echo "更新代码..."
+              git fetch origin
+              git reset --hard origin/main || git reset --hard origin/master
+            fi
+
+            # 进入后端目录
+            cd backend
+
+            # 激活虚拟环境
+            if [ -d "venv" ]; then
+              source venv/bin/activate
+            else
+              echo "创建虚拟环境..."
+              python3 -m venv venv
+              source venv/bin/activate
+            fi
+
+            # 更新依赖
+            echo "安装 Python 依赖..."
+            pip install -r requirements.txt
+
+            # 安装 Playwright 浏览器（首次或需要时）
+            if [ ! -d "$HOME/.cache/ms-playwright" ]; then
+              echo "安装 Playwright 浏览器..."
+              playwright install chromium
+              playwright install-deps chromium
+            fi
+
+            # 初始化数据库（如果需要）
+            echo "检查数据库..."
+            python scripts/init_db.py || echo "数据库已存在"
+
+            # 重启 API 服务
+            echo "重启 API 服务..."
+            supervisorctl restart claude-skills-api || echo "首次部署，需手动配置 supervisor"
+
+            # 检查服务状态
+            echo "检查服务状态..."
+            supervisorctl status claude-skills-api || echo "请配置 supervisor"
+
+            echo "后端部署完成！"
+
+  deploy-frontend:
+    name: 部署前端
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v3
+
+      - name: 部署前端资源
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            cd /var/www/claude-skills-miniapp/frontend
+
+            echo "前端代码已更新"
+            echo "注意：uni-app 项目需要通过 HBuilderX 构建小程序"
+            echo "或使用微信开发者工具加载 frontend 目录"
+
+  run-crawler:
+    name: 运行爬虫（可选）
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    if: github.event_name == 'workflow_dispatch'  # 仅手动触发时运行
+
+    steps:
+      - name: 运行爬虫更新技能数据
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SERVER_PORT || 22 }}
+          script: |
+            cd /var/www/claude-skills-miniapp/backend
+            source venv/bin/activate
+
+            echo "运行爬虫更新技能数据..."
+            python scripts/browser_api_crawler.py
+
+            echo "爬虫运行完成！"
