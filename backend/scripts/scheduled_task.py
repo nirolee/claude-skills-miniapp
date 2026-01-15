@@ -13,6 +13,11 @@ import sys
 from pathlib import Path
 import argparse
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+# 加载环境变量
+load_dotenv()
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
