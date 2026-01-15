@@ -204,44 +204,47 @@ async def save_skills_to_db(skills_data: list):
                 content = skill_data.get('content') or skill_data.get('readme') or skill_data.get('description') or ''
                 is_official = skill_data.get('is_official', False) or skill_data.get('isOfficial', False)
 
-                # 映射分类
+                #映射分类
                 category = await map_category(skill_data)
 
                 # 生成安装命令
                 install_cmd = f"claude skill install {github_url}" if github_url else ''
 
-                skill = Skill(
-                    name=name,
-                    slug=slug,
-                    description=description[:500] if description else '',  # 限制长度
-                    author=author,
-                    github_url=github_url,
-                    stars=stars,
-                    forks=forks,
-                    category=category,
-                    tags=tags if isinstance(tags, list) else [],
-                    content=content,
-                    install_command=install_cmd,
-                    status='active',
-                    is_official=is_official
-                )
+                # 准备��能数据字典
+                skill_dict = {
+                    'name': name,
+                    'slug': slug,
+                    'description': description[:500] if description else '',
+                    'author': author,
+                    'github_url': github_url,
+                    'stars': stars,
+                    'forks': forks,
+                    'category': category,
+                    'tags': tags if isinstance(tags, list) else [],
+                    'content': content,
+                    'install_command': install_cmd,
+                    'status': 'active',
+                    'is_official': is_official
+                }
 
                 # 检查是否已存在
-                existing = await repo.get_by_slug(skill.slug)
+                existing = await repo.get_by_slug(slug)
 
                 if existing:
                     # 更新
-                    existing.name = skill.name
-                    existing.description = skill.description
-                    existing.stars = skill.stars
-                    existing.forks = skill.forks
-                    existing.content = skill.content
-                    existing.tags = skill.tags
-                    await repo.update(existing)
+                    update_data = {
+                        'name': name,
+                        'description': description[:500] if description else '',
+                        'stars': stars,
+                        'forks': forks,
+                        'content': content,
+                        'tags': tags if isinstance(tags, list) else []
+                    }
+                    await repo.update(existing.id, update_data)
                     updated_count += 1
                 else:
                     # 新增
-                    await repo.create(skill)
+                    await repo.create(skill_dict)
                     saved_count += 1
 
             except Exception as e:
