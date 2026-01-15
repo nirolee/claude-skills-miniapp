@@ -1,8 +1,8 @@
 """
-批量翻译已有技能
+批量翻译已有技能 - 使用 Claude AI
 
 使用方法:
-1. 配置 .env 文件中的翻译API密钥
+1. 配置 .env 文件中的 ANTHROPIC_API_KEY
 2. 运行: python scripts/translate_skills.py --limit 10 (测试)
 3. 运行: python scripts/translate_skills.py (翻译全部)
 """
@@ -15,12 +15,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import text
 from src.storage.database import get_session, SkillRepository
-from src.services.translation import translate_skill_fields
+from src.services.ai_translation import translate_skill_fields
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 

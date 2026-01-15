@@ -3,7 +3,7 @@
 
 执行流程：
 1. 运行爬虫获取最新技能数据（幂等）
-2. 自动翻译未翻译的技能（限制每次翻译数量避免超额）
+2. 自动翻译未翻译的技能（使用 Claude AI）
 
 使用方法:
   python scripts/scheduled_task.py --translate-limit 50
@@ -16,13 +16,15 @@ from datetime import datetime
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from scripts.browser_api_crawler import crawl_all_skills_browser, save_skills_to_db
+from scripts.browser_api_crawler import (
+    crawl_all_skills_browser,
+    save_skills_to_db,
+)
 from scripts.translate_skills import translate_skills
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
