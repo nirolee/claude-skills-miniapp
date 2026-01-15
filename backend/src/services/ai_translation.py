@@ -174,7 +174,13 @@ def get_translator() -> AITranslator:
                 "未配置 ANTHROPIC_API_KEY，请在 .env 文件中配置"
             )
 
-        client = AsyncAnthropic(api_key=api_key)
+        # 支持自定义 base_url（用于代理）
+        base_url = os.getenv("ANTHROPIC_BASE_URL")
+        if base_url:
+            client = AsyncAnthropic(api_key=api_key, base_url=base_url)
+        else:
+            client = AsyncAnthropic(api_key=api_key)
+
         _translator_instance = AITranslator(client)
 
     return _translator_instance
