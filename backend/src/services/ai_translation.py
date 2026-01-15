@@ -20,8 +20,8 @@ class AITranslator:
             client: Anthropic AI 客户端（通过依赖注入提供）
         """
         self.client = client
-        # 使用 Haiku 更经济，翻译任务不需要最强模型
-        self.model = "claude-3-5-haiku-20241022"
+        # 使用 Sonnet 4.5 确保兼容性
+        self.model = "claude-sonnet-4-5-20250929"
 
     async def translate_text(
         self, text: str, source_lang: str = "en", target_lang: str = "zh"
