@@ -231,17 +231,44 @@ async def save_skills_to_db(skills_data: list):
                 existing = await repo.get_by_slug(slug)
 
                 if existing:
-                    # 更新
-                    update_data = {
-                        'name': name,
-                        'description': description[:500] if description else '',
-                        'stars': stars,
-                        'forks': forks,
-                        'content': content,
-                        'tags': tags if isinstance(tags, list) else []
-                    }
-                    await repo.update(existing.id, update_data)
-                    updated_count += 1
+                    # 幂等检查：只更新有变化的字段
+                    has_changes = False
+                    update_data = {}
+
+                    # 检查关键字段是否有变化
+                    if existing.name != name:
+                        update_data['name'] = name
+                        has_changes = True
+
+                    if existing.description != (description[:500] if description else ''):
+                        update_data['description'] = description[:500] if description else ''
+                        has_changes = True
+
+                    if existing.stars != stars:
+                        update_data['stars'] = stars
+                        has_changes = True
+
+                    if existing.forks != forks:
+                        update_data['forks'] = forks
+                        has_changes = True
+
+                    if existing.content != content:
+                        update_data['content'] = content
+                        has_changes = True
+
+                    if existing.tags != (tags if isinstance(tags, list) else []):
+                        update_data['tags'] = tags if isinstance(tags, list) else []
+                        has_changes = True
+
+                    # 只有有变化时才更新
+                    if has_changes:
+                        await repo.update(existing.id, update_data)
+                        updated_count += 1
+                        logger.debug(f"  更新技能: {name} (变化字段: {list(update_data.keys())})")
+                    else:
+                        # 跳过，数据未变化
+                        pass
+
                 else:
                     # 新增
                     await repo.create(skill_dict)
@@ -255,6 +282,7 @@ async def save_skills_to_db(skills_data: list):
         logger.info(f"\n保存结果:")
         logger.info(f"  新增: {saved_count}")
         logger.info(f"  更新: {updated_count}")
+        logger.info(f"  跳过(无变化): {len(skills_data) - saved_count - updated_count - error_count}")
         logger.info(f"  失败: {error_count}")
 
 

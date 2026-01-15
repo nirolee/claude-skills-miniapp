@@ -59,10 +59,12 @@ class Skill(Base):
 
     # 基础信息
     name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
+    name_zh: Mapped[Optional[str]] = mapped_column(String(200))  # 中文名称
     slug: Mapped[str] = mapped_column(
         String(200), nullable=False, unique=True, index=True
     )
     description: Mapped[str] = mapped_column(Text, nullable=False)
+    description_zh: Mapped[Optional[str]] = mapped_column(Text)  # 中文描述
     author: Mapped[str] = mapped_column(String(200), nullable=False)
 
     # GitHub 信息
@@ -79,6 +81,7 @@ class Skill(Base):
 
     # 内容
     content: Mapped[str] = mapped_column(Text, nullable=False)  # 完整的 SKILL.md
+    content_zh: Mapped[Optional[str]] = mapped_column(Text)  # 中文内容
     install_command: Mapped[str] = mapped_column(
         Text, nullable=False
     )  # 安装命令
