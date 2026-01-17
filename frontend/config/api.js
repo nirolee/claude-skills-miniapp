@@ -4,8 +4,8 @@
 
 // 开发环境和生产环境的 API 地址
 const ENV = {
-  // 开发环境 - 本地调试（需要使用微信开发者工具的本地服务器域名设置）
-  development: 'http://localhost:8000',
+  // 开发环境 - 使用线上 API（本地没有后端服务）
+  development: 'https://api.liguoqi.site',
 
   // 生产环境 - HTTPS 域名（已备案）
   production: 'https://api.liguoqi.site'
