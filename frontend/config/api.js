@@ -7,8 +7,8 @@ const ENV = {
   // 开发环境 - 本地调试（需要使用微信开发者工具的本地服务器域名设置）
   development: 'http://localhost:8000',
 
-  // 生产环境 - 223服务器（端口8081）
-  production: 'http://223.109.140.233:8081'
+  // 生产环境 - HTTPS 域名（已备案）
+  production: 'https://api.liguoqi.site'
 }
 
 // 当前环境配置
