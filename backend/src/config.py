@@ -36,9 +36,10 @@ class Settings(BaseSettings):
     github_token: Optional[str] = None
     github_api_base: str = "https://api.github.com"
 
-    # Anthropic API 配置（用于未来的 AI 功能）
+    # Anthropic API 配置（用于翻译功能）
     anthropic_api_key: Optional[str] = None
     anthropic_model: str = "claude-3-5-sonnet-20241022"
+    anthropic_base_url: Optional[str] = None  # 支持代理配置
 
     # 爬虫配置
     crawler_user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
