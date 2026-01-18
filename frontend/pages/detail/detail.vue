@@ -566,14 +566,17 @@ export default {
   align-items: center;
   gap: 16rpx;
   padding: 24rpx;
-  background: rgba(0, 217, 255, 0.05);
-  border: 1rpx solid rgba(0, 217, 255, 0.2);
+  background: rgba(0, 217, 255, 0.15);
+  border: 2rpx solid rgba(0, 217, 255, 0.5);
   border-radius: 16rpx;
   margin-bottom: 12rpx;
   transition: all 0.3s;
+  box-shadow: 0 0 20rpx rgba(0, 217, 255, 0.15);
 
   &:active {
-    background: rgba(0, 217, 255, 0.1);
+    background: rgba(0, 217, 255, 0.25);
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 30rpx rgba(0, 217, 255, 0.3);
     transform: scale(0.98);
   }
 }
@@ -581,7 +584,7 @@ export default {
 .command-text {
   flex: 1;
   font-size: 24rpx;
-  color: var(--primary-cyan);
+  color: var(--neon-cyan);
   font-family: 'Courier New', monospace;
   word-break: break-all;
 }
