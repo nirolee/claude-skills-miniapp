@@ -356,7 +356,7 @@ export default {
   position: relative;
 }
 
-// 用户信息区域
+/* 用户信息区域 */
 .user-section {
   padding: 60rpx 40rpx;
   background: linear-gradient(135deg, rgba(0, 217, 255, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
@@ -491,7 +491,7 @@ export default {
   color: var(--text-tertiary);
 }
 
-// 收藏列表区域
+/* 收藏列表区域 */
 .favorites-section {
   padding: 40rpx;
 }
@@ -597,7 +597,7 @@ export default {
   font-family: var(--font-mono);
 }
 
-// 空状态
+/* 空状态 */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -637,7 +637,7 @@ export default {
   font-weight: 600;
 }
 
-// 加载更多
+/* 加载更多 */
 .load-more {
   display: flex;
   justify-content: center;
@@ -660,7 +660,7 @@ export default {
   }
 }
 
-// 设置区域
+/* 设置区域 */
 .settings-section {
   padding: 40rpx;
 }

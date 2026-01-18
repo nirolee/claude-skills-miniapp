@@ -369,7 +369,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-// 保留原有样式...
+/* 保留原有样式... */
 .page {
   min-height: 100vh;
   background: var(--bg-primary);

@@ -417,7 +417,7 @@ export default {
   position: relative;
 }
 
-// 搜索栏
+/* 搜索栏 */
 .search-bar {
   position: sticky;
   top: 0;
@@ -478,7 +478,7 @@ export default {
   padding: 0 8rpx;
 }
 
-// 搜索历史
+/* 搜索历史 */
 .search-history {
   padding: 32rpx 24rpx;
   border-bottom: 1rpx solid var(--border-color);
@@ -548,7 +548,7 @@ export default {
   background: rgba(255, 255, 255, 0.1);
 }
 
-// 快速筛选
+/* 快速筛选 */
 .quick-filters {
   padding: 32rpx 24rpx;
 }
@@ -626,7 +626,7 @@ export default {
   }
 }
 
-// 搜索结果
+/* 搜索结果 */
 .search-results {
   padding: 24rpx;
 }
@@ -668,7 +668,7 @@ export default {
   color: var(--primary-cyan);
 }
 
-// 空状态
+/* 空状态 */
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -692,7 +692,7 @@ export default {
   color: var(--text-tertiary);
 }
 
-// 结果列表
+/* 结果列表 */
 .result-list {
   display: flex;
   flex-direction: column;

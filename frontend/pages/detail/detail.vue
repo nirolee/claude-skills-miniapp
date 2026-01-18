@@ -339,7 +339,7 @@ export default {
   position: relative;
 }
 
-// 自定义导航栏
+/* 自定义导航栏 */
 .nav-bar {
   position: sticky;
   top: 0;
@@ -385,7 +385,7 @@ export default {
   font-family: 'Courier New', monospace;
 }
 
-// 技能头部信息
+/* 技能头部信息 */
 .skill-header {
   padding: 32rpx 24rpx;
   border-bottom: 1rpx solid var(--border-color);
@@ -517,7 +517,7 @@ export default {
   font-size: 40rpx;
 }
 
-// 标签区域
+/* 标签区域 */
 .tags-section {
   padding: 24rpx;
   display: flex;
@@ -535,7 +535,7 @@ export default {
   font-family: 'Courier New', monospace;
 }
 
-// 通用 Section 样式
+/* 通用 Section 样式 */
 .install-section,
 .content-section,
 .related-section {
@@ -560,7 +560,7 @@ export default {
   color: var(--text-primary);
 }
 
-// 安装命令区域
+/* 安装命令区域 */
 .install-command {
   display: flex;
   align-items: center;
@@ -600,7 +600,7 @@ export default {
   text-align: center;
 }
 
-// Markdown 内容区域
+/* Markdown 内容区域 */
 .markdown-content {
   padding: 24rpx;
   background: rgba(0, 217, 255, 0.03);
@@ -616,7 +616,7 @@ export default {
   word-break: break-word;
 }
 
-// 相关推荐
+/* 相关推荐 */
 .related-list {
   display: flex;
   flex-direction: column;
