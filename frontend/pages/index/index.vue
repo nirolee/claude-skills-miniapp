@@ -130,7 +130,8 @@
 </template>
 
 <script>
-import { getSkillsList, getCategories, addFavorite, removeFavorite } from '../../utils/api.js'
+import { getSkillsList, getCategories, addFavorite, removeFavorite, checkFavorite } from '../../utils/api.js'
+import { getCurrentUserId, requireLogin } from '../../utils/login.js'
 
 export default {
   data() {
@@ -147,8 +148,6 @@ export default {
         { id: 'all', name: 'All', icon: '🌐' },
       ],
       skills: [],
-      // 临时用户ID（实际应从微信登录获取）
-      userId: 1,
     }
   },
   methods: {
@@ -247,7 +246,7 @@ export default {
             stars: this.formatNumber(skill.stars),
             forks: this.formatNumber(skill.forks),
             downloads: this.formatNumber(skill.view_count),
-            isFavorited: false, // TODO: 从API获取收藏状态
+            isFavorited: false, // 稍后加载��藏状态
           }))
 
           if (reset) {
@@ -258,6 +257,12 @@ export default {
 
           // 判断是否还有更多数据
           this.hasMore = newSkills.length >= this.pageSize
+
+          // 如果已登录，加载收藏状态
+          const userId = getCurrentUserId()
+          if (userId) {
+            await this.loadFavoriteStatus(newSkills)
+          }
         }
       } catch (error) {
         console.error('加载技能失败:', error)
@@ -292,31 +297,59 @@ export default {
      * 切换收藏
      */
     async toggleFavorite(skillId) {
+      // 检查登录状态
+      const isLoggedIn = await requireLogin()
+      if (!isLoggedIn) return
+
+      const userId = getCurrentUserId()
       const skill = this.skills.find((s) => s.id === skillId)
       if (!skill) return
 
+      const previousState = skill.isFavorited
+
       try {
+        // 乐观更新UI
+        skill.isFavorited = !skill.isFavorited
+
         if (skill.isFavorited) {
-          await removeFavorite(this.userId, skillId)
-          skill.isFavorited = false
-          uni.showToast({
-            title: '取消收藏',
-            icon: 'none',
-          })
-        } else {
-          await addFavorite(this.userId, skillId)
-          skill.isFavorited = true
+          await addFavorite(userId, skillId)
           uni.showToast({
             title: '已收藏',
             icon: 'success',
           })
+        } else {
+          await removeFavorite(userId, skillId)
+          uni.showToast({
+            title: '取消收藏',
+            icon: 'none',
+          })
         }
       } catch (error) {
+        // 回滚UI状态
+        skill.isFavorited = previousState
         console.error('收藏操作失败:', error)
         uni.showToast({
           title: '操作失败',
           icon: 'none',
         })
+      }
+    },
+
+    /**
+     * 加载收藏状态
+     */
+    async loadFavoriteStatus(skills) {
+      const userId = getCurrentUserId()
+      if (!userId || !skills || skills.length === 0) return
+
+      try {
+        // 批量检查收藏状态
+        for (const skill of skills) {
+          const res = await checkFavorite(userId, skill.id)
+          skill.isFavorited = res.is_favorited || false
+        }
+      } catch (error) {
+        console.error('加载收藏状态失败', error)
       }
     },
 

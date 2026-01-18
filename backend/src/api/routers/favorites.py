@@ -10,6 +10,7 @@ from ...storage.database import (
     get_session,
     FavoriteRepository,
     SkillRepository,
+    UserRepository,
     SkillStatsRepository,
 )
 
@@ -64,7 +65,13 @@ async def add_favorite(request: FavoriteRequest):
         async with get_session() as session:
             fav_repo = FavoriteRepository(session)
             skill_repo = SkillRepository(session)
+            user_repo = UserRepository(session)
             stats_repo = SkillStatsRepository(session)
+
+            # 验证用户是否存在
+            user = await user_repo.get_by_id(request.user_id)
+            if not user:
+                raise HTTPException(status_code=404, detail="用户不存在")
 
             # 检查技能是否存在
             skill = await skill_repo.get_by_id(request.skill_id)
