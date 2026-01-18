@@ -7,6 +7,7 @@ from playwright.async_api import async_playwright
 import json
 import sys
 import os
+import html
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -215,17 +216,22 @@ async def save_skills_to_db(skills_data: list):
         for skill_data in skills_data:
             try:
                 # 映射字段（根据实际 API 响应调整）
+                # 解码 HTML 实体（如 &gt; -> >）
+                name = skill_data.get('name', skill_data.get('title', 'Unknown'))
+                description = skill_data.get('description', '')
+                content = skill_data.get('content', skill_data.get('readme', ''))
+
                 skill = Skill(
-                    name=skill_data.get('name', skill_data.get('title', 'Unknown')),
+                    name=html.unescape(name),
                     slug=skill_data.get('slug', skill_data.get('id', '')),
-                    description=skill_data.get('description', ''),
+                    description=html.unescape(description),
                     author=skill_data.get('author', skill_data.get('owner', 'Unknown')),
                     github_url=skill_data.get('github_url', skill_data.get('url', '')),
                     stars=skill_data.get('stars', 0),
                     forks=skill_data.get('forks', 0),
                     category=SkillCategory.GENERAL,  # 需要根据实际分类映射
                     tags=skill_data.get('tags', []),
-                    content=skill_data.get('content', skill_data.get('readme', '')),
+                    content=html.unescape(content) if content else '',
                     install_command=f"claude skill install {skill_data.get('github_url', '')}",
                     status='active',
                     is_official=skill_data.get('is_official', False)
@@ -236,11 +242,11 @@ async def save_skills_to_db(skills_data: list):
 
                 if existing:
                     # 更新
-                    existing.name = skill.name
-                    existing.description = skill.description
+                    existing.name = html.unescape(name)
+                    existing.description = html.unescape(description)
                     existing.stars = skill.stars
                     existing.forks = skill.forks
-                    existing.content = skill.content
+                    existing.content = html.unescape(content) if content else ''
                     await repo.update(existing)
                     updated_count += 1
                 else:
