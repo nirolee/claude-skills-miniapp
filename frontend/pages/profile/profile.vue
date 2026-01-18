@@ -3,9 +3,17 @@
     <!-- 用户信息区域 -->
     <view class="user-section">
       <view class="user-card" v-if="isLoggedIn">
-        <image class="user-avatar" :src="userInfo.avatar_url || defaultAvatar" mode="aspectFill"></image>
+        <button class="avatar-wrapper" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
+          <image class="user-avatar" :src="userInfo.avatar_url || defaultAvatar" mode="aspectFill"></image>
+        </button>
         <view class="user-info">
-          <text class="user-name">{{ userInfo.nickname || '未知用户' }}</text>
+          <input
+            class="user-name-input"
+            type="nickname"
+            :value="userInfo.nickname || '点击设置昵称'"
+            @blur="onNicknameBlur"
+            placeholder="点击设置昵称"
+          />
           <text class="user-id">ID: {{ userInfo.user_id }}</text>
         </view>
         <text class="terminal-cursor">▊</text>
@@ -14,7 +22,7 @@
       <view class="login-card" v-else @click="handleLogin">
         <text class="login-icon">⚡</text>
         <text class="login-text">点击登录</text>
-        <text class="login-hint">微信一键授权</text>
+        <text class="login-hint">快速登录后设置头像昵称</text>
       </view>
     </view>
 
@@ -115,6 +123,58 @@ export default {
       this.isLoggedIn = checkLogin()
       if (this.isLoggedIn) {
         this.userInfo = getCurrentUser()
+      }
+    },
+
+    // 选择头像
+    async onChooseAvatar(e) {
+      const { avatarUrl } = e.detail
+      try {
+        // 更新本地用户信息
+        this.userInfo.avatar_url = avatarUrl
+        uni.setStorageSync('user', this.userInfo)
+
+        // TODO: 调用后端API更新头像
+        // await updateUserProfile(this.userInfo.user_id, { avatar_url: avatarUrl })
+
+        uni.showToast({
+          title: '头像已更新',
+          icon: 'success'
+        })
+      } catch (error) {
+        console.error('更新头像失败', error)
+        uni.showToast({
+          title: '更新失败',
+          icon: 'none'
+        })
+      }
+    },
+
+    // 昵称输入框失焦
+    async onNicknameBlur(e) {
+      const nickname = e.detail.value.trim()
+      if (!nickname || nickname === this.userInfo.nickname) {
+        return
+      }
+
+      try {
+        // 更新本地用户信息
+        this.userInfo.nickname = nickname
+        uni.setStorageSync('user', this.userInfo)
+
+        // TODO: 调用后端API更新昵称
+        // await updateUserProfile(this.userInfo.user_id, { nickname })
+
+        uni.showToast({
+          title: '昵称已更新',
+          icon: 'success'
+        })
+      } catch (error) {
+        console.error('更新昵称失败', error)
+        uni.showToast({
+          title: '更新失败',
+          icon: 'none'
+        })
       }
     },
 
@@ -322,12 +382,32 @@ export default {
   }
 }
 
+.avatar-wrapper {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  line-height: 1;
+
+  &::after {
+    border: none;
+  }
+}
+
 .user-avatar {
   width: 120rpx;
   height: 120rpx;
   border-radius: 60rpx;
   border: 4rpx solid var(--primary-color);
   background: var(--bg-primary);
+  display: block;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:active {
+    transform: scale(0.95);
+    border-color: var(--accent-color);
+  }
 }
 
 .user-info {
@@ -342,6 +422,23 @@ export default {
   font-weight: 600;
   color: var(--text-primary);
   font-family: var(--font-mono);
+}
+
+.user-name-input {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  padding: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  width: 100%;
+
+  &::placeholder {
+    color: var(--text-tertiary);
+    opacity: 0.6;
+  }
 }
 
 .user-id {

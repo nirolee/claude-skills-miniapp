@@ -145,34 +145,35 @@ async def wechat_login(request: WechatLoginRequest):
 
             if user:
                 # 更新用户信息
+                update_data = {"session_key": session_key}
+
                 if request.nickname:
-                    user.nickname = request.nickname
+                    update_data["nickname"] = request.nickname
                 if request.avatar_url:
-                    user.avatar_url = request.avatar_url
+                    update_data["avatar_url"] = request.avatar_url
                 if request.gender:
-                    user.gender = request.gender
+                    update_data["gender"] = request.gender
                 if request.city:
-                    user.city = request.city
+                    update_data["city"] = request.city
                 if request.province:
-                    user.province = request.province
-
-                user.session_key = session_key
+                    update_data["province"] = request.province
                 if unionid:
-                    user.unionid = unionid
+                    update_data["unionid"] = unionid
 
-                await repo.update(user)
+                user = await repo.update(user.id, update_data)
             else:
                 # 创建新用户
-                user = await repo.create(
-                    openid=openid,
-                    session_key=session_key,
-                    unionid=unionid,
-                    nickname=request.nickname or f"用户{openid[:8]}",
-                    avatar_url=request.avatar_url,
-                    gender=request.gender or 0,
-                    city=request.city,
-                    province=request.province,
-                )
+                user_data = {
+                    "openid": openid,
+                    "session_key": session_key,
+                    "unionid": unionid,
+                    "nickname": request.nickname or f"用户{openid[:8]}",
+                    "avatar_url": request.avatar_url,
+                    "gender": request.gender or 0,
+                    "city": request.city,
+                    "province": request.province,
+                }
+                user = await repo.create(user_data)
 
         # 3. 生成 token
         token = generate_token(openid, user.id)

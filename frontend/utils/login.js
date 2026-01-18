@@ -24,40 +24,21 @@ export async function wxLogin() {
       throw new Error('获取登录凭证失败')
     }
 
-    // 2. 获取用户信息（昵称、头像等）
-    let userInfo = null
-    try {
-      const userInfoRes = await new Promise((resolve, reject) => {
-        uni.getUserProfile({
-          desc: '用于完善用户资料',
-          success: resolve,
-          fail: reject
-        })
-      })
-      userInfo = userInfoRes.userInfo
-    } catch (error) {
-      console.log('用户拒绝授权获取用户信息', error)
-      // 不阻断登录流程，继续使用默认信息
-    }
-
-    // 3. 发送 code 到后端换取 openid 和 token
+    // 2. 发送 code 到后端换取 openid 和 token
+    // 注意：从微信小程序基础库 2.21.2 开始，getUserProfile 已废弃
+    // 新版使用头像昵称填写组件让用户主动设置，登录后在个人中心完善资料
     const loginData = {
-      code: loginRes.code,
-      nickname: userInfo?.nickName,
-      avatar_url: userInfo?.avatarUrl,
-      gender: userInfo?.gender || 0,
-      city: userInfo?.city,
-      province: userInfo?.province
+      code: loginRes.code
     }
 
     const response = await post('/auth/login', loginData)
 
-    // 4. 保存用户信息到本地
+    // 3. 保存用户信息到本地
     uni.setStorageSync('user', response)
     uni.setStorageSync('token', response.token)
     uni.setStorageSync('user_id', response.user_id)
 
-    // 5. 返回用户信息
+    // 4. 返回用户信息
     return response
   } catch (error) {
     console.error('登录失败', error)
