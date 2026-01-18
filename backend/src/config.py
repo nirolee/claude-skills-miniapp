@@ -4,6 +4,29 @@
 """
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
+import json
+
+
+def load_claude_code_config() -> Optional[dict]:
+    """
+    加载 Claude Code 的配置文件
+
+    Returns:
+        配置字典，如果文件不存在则返回 None
+    """
+    try:
+        # Claude Code 配置文件路径
+        claude_config_path = Path.home() / ".claude" / "settings.json"
+
+        if claude_config_path.exists():
+            with open(claude_config_path, 'r', encoding='utf-8') as f:
+                config = json.load(f)
+                return config.get('env', {})
+    except Exception:
+        pass
+
+    return None
 
 
 class Settings(BaseSettings):
@@ -77,6 +100,38 @@ class Settings(BaseSettings):
         if self.redis_password:
             return f"redis://:{self.redis_password}@{self.redis_host}:{self.redis_port}/{self.redis_db}"
         return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
+
+    def get_anthropic_config(self) -> dict:
+        """
+        获取 Anthropic API 配置
+
+        优先级：
+        1. .env 配置文件
+        2. Claude Code 配置 (~/.claude/settings.json)
+        3. 系统环境变量（由 SDK 自动读取）
+
+        Returns:
+            包含 api_key 和 base_url 的字典
+        """
+        config = {}
+
+        # 优先使用 .env 配置
+        if self.anthropic_api_key:
+            config['api_key'] = self.anthropic_api_key
+        if self.anthropic_base_url:
+            config['base_url'] = self.anthropic_base_url
+
+        # 如果没有配置，尝试从 Claude Code 读取
+        if not config.get('api_key'):
+            claude_config = load_claude_code_config()
+            if claude_config:
+                if claude_config.get('ANTHROPIC_API_KEY'):
+                    config['api_key'] = claude_config['ANTHROPIC_API_KEY']
+                if claude_config.get('ANTHROPIC_BASE_URL'):
+                    config['base_url'] = claude_config['ANTHROPIC_BASE_URL']
+
+        # 如果还是没有，让 SDK 自动从环境变量读取（返回空字典）
+        return config
 
 
 # 全局配置单例

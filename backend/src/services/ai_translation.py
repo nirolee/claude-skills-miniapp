@@ -164,24 +164,27 @@ def get_translator() -> AITranslator:
     global _translator_instance
 
     if _translator_instance is None:
-        # 从环境变量或配置创建客户端
-        import os
+        # 从配置系统获取 API 配置
+        from src.config import get_settings
         from anthropic import AsyncAnthropic
 
-        api_key = os.getenv("ANTHROPIC_API_KEY")
-        if not api_key or api_key == "your_anthropic_api_key":
-            raise ValueError(
-                "未配置 ANTHROPIC_API_KEY，请在 .env 文件中配置"
-            )
+        settings = get_settings()
+        config = settings.get_anthropic_config()
 
-        # 支持自定义 base_url（用于代理）
-        base_url = os.getenv("ANTHROPIC_BASE_URL")
-        if base_url:
-            client = AsyncAnthropic(api_key=api_key, base_url=base_url)
+        # 如果配置中有 api_key，使用配置创建客户端
+        if config:
+            client = AsyncAnthropic(**config)
         else:
-            client = AsyncAnthropic(api_key=api_key)
+            # 否则让 SDK 自动从环境变量读取
+            client = AsyncAnthropic()
 
         _translator_instance = AITranslator(client)
+
+        # 记录配置来源
+        if config.get('api_key'):
+            logger.info("✅ Anthropic API 配置已加载（来源：配置文件或 Claude Code）")
+        else:
+            logger.info("✅ Anthropic API 配置已加载（来源：系统环境变量）")
 
     return _translator_instance
 

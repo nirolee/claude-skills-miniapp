@@ -52,8 +52,15 @@ async def get_browser_session():
             raise
 
 
-async def fetch_skills_from_api(cookies: dict, page: int = 1, limit: int = 100):
-    """使用 API 获取技能列表"""
+async def fetch_skills_from_api(cookies: dict, page: int = 1, limit: int = 100, max_retries: int = 3):
+    """使用 API 获取技能列表
+
+    Args:
+        cookies: 浏览器会话 cookies
+        page: 页码
+        limit: 每页数量
+        max_retries: 最大重试次数（用于处理 429 错误）
+    """
     url = "https://skillsmp.com/api/skills"
     params = {
         'page': page,
@@ -71,19 +78,33 @@ async def fetch_skills_from_api(cookies: dict, page: int = 1, limit: int = 100):
     }
 
     async with aiohttp.ClientSession(cookies=cookies, headers=headers) as session:
-        try:
-            async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=30)) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return data
-                else:
-                    logger.error(f"API 请求失败: {response.status}")
-                    text = await response.text()
-                    logger.error(f"响应内容: {text[:200]}")
-                    return None
-        except Exception as e:
-            logger.error(f"API 请求异常: {e}")
-            return None
+        for attempt in range(max_retries):
+            try:
+                async with session.get(url, params=params, timeout=aiohttp.ClientTimeout(total=30)) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        return data
+                    elif response.status == 429:
+                        # 触发速率限制
+                        wait_time = (attempt + 1) * 30  # 递增等待时间：30秒、60秒、90秒
+                        logger.warning(f"API 触发速率限制 (429)，等待 {wait_time} 秒后重试... ({attempt + 1}/{max_retries})")
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        logger.error(f"API 请求失败: {response.status}")
+                        text = await response.text()
+                        logger.error(f"响应内容: {text[:200]}")
+                        return None
+            except Exception as e:
+                logger.error(f"API 请求异常: {e}")
+                if attempt < max_retries - 1:
+                    await asyncio.sleep(10)
+                    continue
+                return None
+
+        # 所有重试都失败
+        logger.error(f"第 {page} 页获取失败：已达到最大重试次数")
+        return None
 
 
 async def crawl_all_skills():
@@ -171,8 +192,8 @@ async def crawl_all_skills():
 
         all_skills.extend(page_skills)
 
-        # 避免请求过快
-        await asyncio.sleep(1)
+        # 避免请求过快，增加延迟
+        await asyncio.sleep(2)
 
     logger.info(f"\n=== 爬取完成 ===")
     logger.info(f"总计获取到 {len(all_skills)} 个技能")
