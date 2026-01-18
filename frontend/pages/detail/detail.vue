@@ -334,6 +334,9 @@ export default {
   min-height: 100vh;
   background: var(--bg-primary);
   padding-bottom: 40rpx;
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }
 
 // 自定义导航栏

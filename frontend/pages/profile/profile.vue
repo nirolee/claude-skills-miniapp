@@ -351,6 +351,9 @@ export default {
   min-height: 100vh;
   background: var(--bg-primary);
   padding-bottom: calc(env(safe-area-inset-bottom) + 120rpx);
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }
 
 // 用户信息区域

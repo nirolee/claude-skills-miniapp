@@ -60,6 +60,32 @@ page {
   font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'JetBrains Mono', Consolas, monospace;
   font-size: 28rpx;
   line-height: 1.6;
+  width: 100%;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* 防止所有容器横向溢出 */
+view, page, scroll-view {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* 防止文本溢出 */
+text, input, textarea {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* 防止图片溢出 */
+image {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Scrollbar Styling (for H5) */
