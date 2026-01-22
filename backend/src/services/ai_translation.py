@@ -94,33 +94,51 @@ class AITranslator:
         Returns:
             包含翻译结果的字典
         """
-        # 使用单次请求翻译所有字段（更经济）
+        # 如果 content 很长，分开翻译以获得更好的质量
+        if len(content) > 3000:
+            logger.info(f"Content 较长 ({len(content)} 字符)，将单独翻译")
+
+            # 分别翻译
+            name_zh = await self.translate_text(name)
+            description_zh = await self.translate_text(description)
+            content_zh = await self.translate_text(content)
+
+            return {
+                "name_zh": name_zh,
+                "description_zh": description_zh,
+                "content_zh": content_zh,
+            }
+
+        # 短内容：使用单次请求翻译所有字段（更经济）
+        # 使用 JSON 转义避免格式问题
+        import json as json_lib
+
         prompt = f"""请将以下 Claude Code Skill 的信息翻译成中文。
 
 要求：
-1. 保持技术术语准确性
-2. 保持 Markdown 格式
+1. 保持技术术语准确性（如 Claude Code、Debug、API 等专业术语）
+2. 完整保持 Markdown 格式（标题、列表、代码块、链接等）
 3. 自然流畅的中文表达
 4. 以JSON格式返回结果
 
 原文：
-{{
-    "name": "{name}",
-    "description": "{description[:500]}",
-    "content": "{content[:2000]}"
-}}
+{json_lib.dumps({
+    "name": name,
+    "description": description,
+    "content": content
+}, ensure_ascii=False, indent=2)}
 
-请翻译后返回JSON：
+请翻译后返回JSON格式：
 {{
     "name_zh": "翻译后的名称",
     "description_zh": "翻译后的描述",
-    "content_zh": "翻译后的内容"
+    "content_zh": "翻译后的完整内容（保持Markdown格式）"
 }}"""
 
         try:
             response = await self.client.messages.create(
                 model=self.model,
-                max_tokens=8192,
+                max_tokens=16384,  # 增加 token 限制以支持更长内容
                 messages=[{"role": "user", "content": prompt}],
             )
 
@@ -148,10 +166,11 @@ class AITranslator:
         except Exception as e:
             logger.error(f"批量翻译失败: {str(e)}")
             # 降级：逐个翻译
+            logger.info("降级为逐个翻译")
             return {
                 "name_zh": await self.translate_text(name),
-                "description_zh": await self.translate_text(description[:500]),
-                "content_zh": await self.translate_text(content[:2000]),
+                "description_zh": await self.translate_text(description),
+                "content_zh": await self.translate_text(content),
             }
 
 
