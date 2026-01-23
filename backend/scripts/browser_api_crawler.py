@@ -212,13 +212,13 @@ async def map_category(skill_data: dict) -> SkillCategory:
         'ui': SkillCategory.DESIGN,
         'data': SkillCategory.DATA_SCIENCE,
         'analytics': SkillCategory.DATA_SCIENCE,
-        'ml': SkillCategory.DATA_SCIENCE,
-        'machine-learning': SkillCategory.DATA_SCIENCE,
-        'frontend': SkillCategory.DEVELOPMENT,
-        'backend': SkillCategory.DEVELOPMENT,
-        'fullstack': SkillCategory.DEVELOPMENT,
-        'develop': SkillCategory.DEVELOPMENT,
-        'code': SkillCategory.DEVELOPMENT,
+        'ml': SkillCategory.MACHINE_LEARNING,
+        'machine-learning': SkillCategory.MACHINE_LEARNING,
+        'frontend': SkillCategory.FRONTEND,
+        'backend': SkillCategory.BACKEND,
+        'fullstack': SkillCategory.FULLSTACK,
+        'develop': SkillCategory.GENERAL,
+        'code': SkillCategory.GENERAL,
     }
 
     # ��检查 category 字段
