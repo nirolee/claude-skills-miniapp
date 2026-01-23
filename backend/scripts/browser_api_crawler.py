@@ -18,8 +18,12 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def crawl_all_skills_browser():
-    """在浏览器上下文内爬取所有技能"""
+async def crawl_all_skills_browser(batch_size=500):
+    """在浏览器上下文内爬取所有技能，支持分批保存
+
+    Args:
+        batch_size: 每爬取多少页就保存一次到数据库，默认500页
+    """
     logger.info("=== 开始爬取 SkillsMP 所有技能 ===\n")
 
     async with async_playwright() as p:
@@ -46,8 +50,10 @@ async def crawl_all_skills_browser():
 
         # 在浏览器上下文内执行 fetch 请求
         all_skills = []
+        batch_skills = []  # 当前批次的技能
         page_num = 1
         limit = 100
+        total_saved = 0
 
         while True:
             logger.info(f"正在获取第 {page_num} 页...")
@@ -78,13 +84,32 @@ async def crawl_all_skills_browser():
                     break
 
                 # 处理响应数据
+                current_page_skills = []
                 if isinstance(api_response, list):
                     # 响应直接是数组
                     if len(api_response) == 0:
                         logger.info("没有更多数据")
                         break
-                    logger.info(f"  获取到 {len(api_response)} 个技能")
-                    all_skills.extend(api_response)
+
+                    # 检测重复数据：如果连续获取到相同数量的较少数据，可能已到末尾
+                    if len(api_response) < limit * 0.5 and page_num > 10:
+                        logger.info(f"  获取到 {len(api_response)} 个技能（数据量较少，可能接近末尾）")
+                        # 记录最后几页的数据量，判断是否重复
+                        if not hasattr(crawl_all_skills_browser, '_last_sizes'):
+                            crawl_all_skills_browser._last_sizes = []
+                        crawl_all_skills_browser._last_sizes.append(len(api_response))
+                        if len(crawl_all_skills_browser._last_sizes) > 5:
+                            crawl_all_skills_browser._last_sizes.pop(0)
+                        # 如果连续5页数据量都一样且较少，认为已到末尾
+                        if len(crawl_all_skills_browser._last_sizes) == 5 and len(set(crawl_all_skills_browser._last_sizes)) == 1:
+                            logger.info("检测到连续5页返回相同数量的数据，判定为已到达末尾")
+                            current_page_skills = api_response
+                            batch_skills.extend(current_page_skills)
+                            all_skills.extend(current_page_skills)
+                            break
+                    else:
+                        logger.info(f"  获取到 {len(api_response)} 个技能")
+                    current_page_skills = api_response
 
                 elif isinstance(api_response, dict):
                     # 响应是对象，包含 skills/items/data 字段
@@ -104,26 +129,62 @@ async def crawl_all_skills_browser():
                         # 第一页，显示总数
                         logger.info(f"  总技能数: {total}")
 
+                    # 检查是否还有下一页
+                    has_next = api_response.get('hasNext', True)
+                    if not has_next:
+                        logger.info("已到达最后一页（hasNext=false）")
+                        if skills_data and len(skills_data) > 0:
+                            # 保存最后一页的数据
+                            current_page_skills = skills_data
+                            logger.info(f"  获取到 {len(skills_data)} 个技能")
+                            batch_skills.extend(current_page_skills)
+                            all_skills.extend(current_page_skills)
+                        break
+
                     if skills_data is None or len(skills_data) == 0:
                         logger.info("没有更多数据")
                         break
 
                     logger.info(f"  获取到 {len(skills_data)} 个技能")
-                    all_skills.extend(skills_data)
+                    current_page_skills = skills_data
 
                 else:
                     logger.error(f"未知的响应格式: {type(api_response)}")
                     break
+
+                # 添加到批次和总列表
+                batch_skills.extend(current_page_skills)
+                all_skills.extend(current_page_skills)
+
+                # 每爬取 batch_size 页就保存一次
+                if page_num % batch_size == 0 and batch_skills:
+                    logger.info(f"\n--- 已爬取 {page_num} 页，开始分批保存 {len(batch_skills)} 个技能 ---")
+                    await save_skills_to_db(batch_skills)
+                    total_saved += len(batch_skills)
+                    logger.info(f"--- 累计已保存 {total_saved} 个技能到数据库 ---\n")
+                    batch_skills = []  # 清空当前批次
 
                 page_num += 1
                 await asyncio.sleep(1)  # 避免请求过快
 
             except Exception as e:
                 logger.error(f"第 {page_num} 页获取失败: {e}")
+                # 即使出错，也保存已爬取的数据
+                if batch_skills:
+                    logger.info(f"\n--- 出错前保存剩余 {len(batch_skills)} 个技能 ---")
+                    await save_skills_to_db(batch_skills)
+                    total_saved += len(batch_skills)
                 break
+
+        # 保存最后一批数据
+        if batch_skills:
+            logger.info(f"\n--- 保存最后一批 {len(batch_skills)} 个技能 ---")
+            await save_skills_to_db(batch_skills)
+            total_saved += len(batch_skills)
 
         logger.info(f"\n=== 爬取完成 ===")
         logger.info(f"总计获取到 {len(all_skills)} 个技能")
+        logger.info(f"总计保存到数据库 {total_saved} 个技能")
 
         await browser.close()
         return all_skills
@@ -149,10 +210,10 @@ async def map_category(skill_data: dict) -> SkillCategory:
         'documentation': SkillCategory.DOCUMENTATION,
         'design': SkillCategory.DESIGN,
         'ui': SkillCategory.DESIGN,
-        'data': SkillCategory.DATA_ANALYSIS,
-        'analytics': SkillCategory.DATA_ANALYSIS,
-        'ml': SkillCategory.DATA_ANALYSIS,
-        'machine-learning': SkillCategory.DATA_ANALYSIS,
+        'data': SkillCategory.DATA_SCIENCE,
+        'analytics': SkillCategory.DATA_SCIENCE,
+        'ml': SkillCategory.DATA_SCIENCE,
+        'machine-learning': SkillCategory.DATA_SCIENCE,
         'frontend': SkillCategory.DEVELOPMENT,
         'backend': SkillCategory.DEVELOPMENT,
         'fullstack': SkillCategory.DEVELOPMENT,
@@ -287,8 +348,8 @@ async def save_skills_to_db(skills_data: list):
 
 
 async def main():
-    # 爬取所有技能
-    skills = await crawl_all_skills_browser()
+    # 爬取所有技能（已在爬取过程中分批保存到数据库）
+    skills = await crawl_all_skills_browser(batch_size=500)
 
     if not skills:
         logger.error("未获取到任何技能！")
@@ -300,8 +361,7 @@ async def main():
         json.dump(skills[:5], f, indent=2, ensure_ascii=False)
     logger.info(f"\n已保存前 5 个技能样本到: {output_file}")
 
-    # 保存到数据库
-    await save_skills_to_db(skills)
+    logger.info("\n✅ 所有数据已在爬取过程中分批保存到数据库")
 
 
 if __name__ == "__main__":

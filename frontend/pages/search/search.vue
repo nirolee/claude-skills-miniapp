@@ -612,16 +612,17 @@ export default {
 
 .hot-tag {
   padding: 12rpx 20rpx;
-  background: rgba(168, 85, 247, 0.1);
-  border: 1rpx solid rgba(168, 85, 247, 0.3);
+  background: rgba(168, 85, 247, 0.15);
+  border: 1rpx solid rgba(168, 85, 247, 0.5);
   border-radius: 32rpx;
   font-size: 26rpx;
-  color: var(--primary-purple);
+  color: #c084fc;
   font-family: 'Courier New', monospace;
   transition: all 0.3s;
 
   &:active {
-    background: rgba(168, 85, 247, 0.2);
+    background: rgba(168, 85, 247, 0.25);
+    border-color: rgba(168, 85, 247, 0.7);
     transform: scale(0.95);
   }
 }
