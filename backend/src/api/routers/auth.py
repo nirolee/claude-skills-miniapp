@@ -40,6 +40,15 @@ class LoginResponse(BaseModel):
     is_new_user: bool
 
 
+class UpdateUserRequest(BaseModel):
+    """更新用户信息请求"""
+    nickname: Optional[str] = Field(None, description="用户昵称")
+    avatar_url: Optional[str] = Field(None, description="用户头像")
+    gender: Optional[int] = Field(None, description="性别")
+    city: Optional[str] = Field(None, description="城市")
+    province: Optional[str] = Field(None, description="省份")
+
+
 # ==================== Helper Functions ====================
 
 
@@ -219,3 +228,51 @@ async def get_user_info(user_id: int):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"获取用户信息失败: {str(e)}")
+
+
+@router.put("/user/{user_id}")
+async def update_user_info(user_id: int, request: UpdateUserRequest):
+    """更新用户信息"""
+    try:
+        async with get_session() as session:
+            repo = UserRepository(session)
+            user = await repo.get_by_id(user_id)
+
+            if not user:
+                raise HTTPException(status_code=404, detail="用户不存在")
+
+            # 构建更新数据
+            update_data = {}
+            if request.nickname is not None:
+                update_data["nickname"] = request.nickname
+            if request.avatar_url is not None:
+                update_data["avatar_url"] = request.avatar_url
+            if request.gender is not None:
+                update_data["gender"] = request.gender
+            if request.city is not None:
+                update_data["city"] = request.city
+            if request.province is not None:
+                update_data["province"] = request.province
+
+            if not update_data:
+                raise HTTPException(status_code=400, detail="没有需要更新的字段")
+
+            # 更新用户信息
+            user = await repo.update(user_id, update_data)
+
+            return {
+                "success": True,
+                "message": "更新成功",
+                "user": {
+                    "id": user.id,
+                    "nickname": user.nickname,
+                    "avatar_url": user.avatar_url,
+                    "gender": user.gender,
+                    "city": user.city,
+                    "province": user.province,
+                }
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"更新用户信息失败: {str(e)}")

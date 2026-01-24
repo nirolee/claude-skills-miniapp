@@ -15,7 +15,6 @@
             placeholder="点击设置昵称"
           />
         </view>
-        <text class="terminal-cursor">▊</text>
       </view>
 
       <view class="login-card" v-else @click="handleLogin">
@@ -96,7 +95,7 @@
 
 <script>
 import { wxLogin, checkLogin, getCurrentUser, getCurrentUserId, logout } from '../../utils/login.js'
-import { getUserFavorites } from '../../utils/api.js'
+import { getUserFavorites, updateUserProfile } from '../../utils/api.js'
 import { getCurrentLanguage, updateTabBarLanguage } from '../../utils/language.js'
 
 export default {
@@ -137,12 +136,14 @@ export default {
     async onChooseAvatar(e) {
       const { avatarUrl } = e.detail
       try {
+        // 调用后端API更新头像
+        const res = await updateUserProfile(this.userInfo.user_id, {
+          avatar_url: avatarUrl
+        })
+
         // 更新本地用户信息
         this.userInfo.avatar_url = avatarUrl
         uni.setStorageSync('user', this.userInfo)
-
-        // TODO: 调用后端API更新头像
-        // await updateUserProfile(this.userInfo.user_id, { avatar_url: avatarUrl })
 
         uni.showToast({
           title: '头像已更新',
@@ -165,12 +166,14 @@ export default {
       }
 
       try {
+        // 调用后端API更新昵称
+        const res = await updateUserProfile(this.userInfo.user_id, {
+          nickname
+        })
+
         // 更新本地用户信息
         this.userInfo.nickname = nickname
         uni.setStorageSync('user', this.userInfo)
-
-        // TODO: 调用后端API更新昵称
-        // await updateUserProfile(this.userInfo.user_id, { nickname })
 
         uni.showToast({
           title: '昵称已更新',
@@ -241,12 +244,27 @@ export default {
 
         const res = await getUserFavorites(userId, this.currentPage, this.pageSize)
 
+        console.log('收藏列表 API 响应:', res)
+
         this.totalFavorites = res.total
 
+        // 确保数据格式正确
+        const formattedItems = (res.items || []).map(item => ({
+          id: item.skill_id,
+          name: item.name || item.skill_name || '未命名技能',
+          description: item.description || item.skill_description || '暂无描述',
+          category: item.category || item.skill_category || 'general',
+          stars: item.stars || item.skill_stars || 0,
+          view_count: item.view_count || 0,
+          created_at: item.created_at
+        }))
+
+        console.log('格式化后的收藏列表:', formattedItems)
+
         if (this.currentPage === 1) {
-          this.favoriteSkills = res.items
+          this.favoriteSkills = formattedItems
         } else {
-          this.favoriteSkills = [...this.favoriteSkills, ...res.items]
+          this.favoriteSkills = [...this.favoriteSkills, ...formattedItems]
         }
 
         // 判断是否还有更多数据

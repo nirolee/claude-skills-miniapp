@@ -44,11 +44,12 @@ class FavoriteWithSkillResponse(BaseModel):
 
     id: int
     skill_id: int
-    skill_name: str
-    skill_description: str
-    skill_category: str
-    skill_stars: int
-    created_at: str
+    name: str  # 技能名称
+    description: str  # 技能描述
+    category: str  # 分类
+    stars: int  # 星标数
+    view_count: int  # 浏览次数
+    created_at: str  # 收藏时间
 
 
 # ==================== API Routes ====================
@@ -158,10 +159,11 @@ async def list_user_favorites(user_id: int, page: int = 1, page_size: int = 20):
                 FavoriteWithSkillResponse(
                     id=fav.id,
                     skill_id=fav.skill_id,
-                    skill_name=fav.skill.name,
-                    skill_description=fav.skill.description,
-                    skill_category=fav.skill.category.value,
-                    skill_stars=fav.skill.stars,
+                    name=fav.skill.name,
+                    description=fav.skill.description or "",
+                    category=fav.skill.category.value,
+                    stars=fav.skill.stars or 0,
+                    view_count=fav.skill.view_count or 0,
                     created_at=fav.created_at.isoformat(),
                 )
                 for fav in favorites

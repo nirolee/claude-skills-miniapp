@@ -2,7 +2,7 @@
  * 技能相关 API
  */
 
-import { get, post, del } from '../utils/request.js'
+import { get, post, del, put } from '../utils/request.js'
 import { API_ENDPOINTS, DEFAULT_PAGE_SIZE } from '../config/api.js'
 
 /**
@@ -133,6 +133,21 @@ export function checkFavorite(userId, skillId) {
   })
 }
 
+/**
+ * 更新用户信息
+ * @param {Number} userId - 用户ID
+ * @param {Object} data - 更新数据
+ * @param {String} data.nickname - 昵称
+ * @param {String} data.avatar_url - 头像URL
+ * @returns {Promise}
+ */
+export function updateUserProfile(userId, data) {
+  return put(API_ENDPOINTS.AUTH_USER(userId), data, {
+    loading: true,
+    loadingText: '保存中...'
+  })
+}
+
 export default {
   getSkillsList,
   getSkillDetail,
@@ -141,5 +156,6 @@ export default {
   addFavorite,
   removeFavorite,
   getUserFavorites,
-  checkFavorite
+  checkFavorite,
+  updateUserProfile
 }
