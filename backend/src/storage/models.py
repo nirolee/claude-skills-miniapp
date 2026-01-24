@@ -111,8 +111,10 @@ class Skill(Base):
     tags: Mapped[Optional[dict]] = mapped_column(JSON)  # ["tag1", "tag2"]
 
     # 内容
-    content: Mapped[str] = mapped_column(Text, nullable=False)  # 完整的 SKILL.md
-    content_zh: Mapped[Optional[str]] = mapped_column(Text)  # 中文内容
+    content: Mapped[str] = mapped_column(Text, nullable=False)  # 简短描述（用于列表展示）
+    content_zh: Mapped[Optional[str]] = mapped_column(Text)  # 简短描述中文版
+    skill_md: Mapped[Optional[str]] = mapped_column(Text)  # 完整的 SKILL.md 原文
+    skill_md_zh: Mapped[Optional[str]] = mapped_column(Text)  # 完整的 SKILL.md 中文翻译
     install_command: Mapped[str] = mapped_column(
         Text, nullable=False
     )  # 安装命令

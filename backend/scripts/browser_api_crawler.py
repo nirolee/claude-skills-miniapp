@@ -264,7 +264,12 @@ async def save_skills_to_db(skills_data: list):
                 stars = skill_data.get('stars', 0) or 0
                 forks = skill_data.get('forks', 0) or 0
                 tags = skill_data.get('tags', []) or []
-                content = skill_data.get('content') or skill_data.get('readme') or skill_data.get('description') or ''
+
+                # 区分 content 和 skill_md
+                # content: 简短描述（用于列表展示）
+                # skill_md: 完整的 SKILL.md 原文（如果有）
+                skill_md_content = skill_data.get('skillMd') or skill_data.get('readme') or skill_data.get('content') or ''
+
                 is_official = skill_data.get('is_official', False) or skill_data.get('isOfficial', False)
 
                 #映射分类
@@ -273,7 +278,7 @@ async def save_skills_to_db(skills_data: list):
                 # 生成安装命令
                 install_cmd = f"/skills add {github_url}" if github_url else ''
 
-                # 准备��能数据字典
+                # 准备技能数据字典
                 skill_dict = {
                     'name': name,
                     'slug': slug,
@@ -284,7 +289,8 @@ async def save_skills_to_db(skills_data: list):
                     'forks': forks,
                     'category': category,
                     'tags': tags if isinstance(tags, list) else [],
-                    'content': content,
+                    'content': description[:1000] if description else '',  # 简短描述
+                    'skill_md': skill_md_content if skill_md_content else None,  # 完整SKILL.md
                     'install_command': install_cmd,
                     'status': 'active',
                     'is_official': is_official
