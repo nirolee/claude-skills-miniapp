@@ -14,7 +14,6 @@
             @blur="onNicknameBlur"
             placeholder="点击设置昵称"
           />
-          <text class="user-id">ID: {{ userInfo.user_id }}</text>
         </view>
         <text class="terminal-cursor">▊</text>
       </view>
@@ -74,6 +73,10 @@
       </view>
 
       <view class="settings-list">
+        <view class="setting-item" @click="goToPrivacy">
+          <text class="setting-label">隐私政策</text>
+          <text class="setting-arrow">→</text>
+        </view>
         <view class="setting-item" @click="clearCache">
           <text class="setting-label">清除缓存</text>
           <text class="setting-arrow">→</text>
@@ -94,6 +97,7 @@
 <script>
 import { wxLogin, checkLogin, getCurrentUser, getCurrentUserId, logout } from '../../utils/login.js'
 import { getUserFavorites } from '../../utils/api.js'
+import { getCurrentLanguage, updateTabBarLanguage } from '../../utils/language.js'
 
 export default {
   data() {
@@ -111,6 +115,9 @@ export default {
   },
 
   onShow() {
+    // 更新 TabBar 语言
+    updateTabBarLanguage(getCurrentLanguage())
+
     this.checkLoginStatus()
     if (this.isLoggedIn) {
       this.loadFavorites()
@@ -320,6 +327,13 @@ export default {
       })
     },
 
+    // 跳转到隐私政策
+    goToPrivacy() {
+      uni.navigateTo({
+        url: '/pages/privacy/privacy'
+      })
+    },
+
     // 格式化日期
     formatDate(dateString) {
       if (!dateString) return ''
@@ -341,7 +355,29 @@ export default {
 
       // 显示日期
       return `${date.getMonth() + 1}/${date.getDate()}`
-    }
+    },
+
+    /**
+     * 分享给朋友
+     */
+    onShareAppMessage() {
+      return {
+        title: 'Claude Skills - 技能市场',
+        path: '/pages/index/index',
+        imageUrl: '',
+      }
+    },
+
+    /**
+     * 分享到朋友圈
+     */
+    onShareTimeline() {
+      return {
+        title: 'Claude Skills - 发现优质 Claude Code 技能',
+        query: '',
+        imageUrl: '',
+      }
+    },
   }
 }
 </script>

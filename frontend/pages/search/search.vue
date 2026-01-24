@@ -106,7 +106,7 @@
           </view>
 
           <view class="skill-title">
-            <text class="prompt-symbol">></text>
+            <text class="prompt-symbol">&gt;</text>
             <text class="skill-name">{{ highlightText(skill.name) }}</text>
           </view>
 
@@ -138,7 +138,7 @@ export default {
       searchTimer: null,
       searchHistory: [],
       selectedCategory: 'all',
-      sortBy: 'stars', // stars, view_count, name
+      sortBy: 'stars',
       categories: [],
       hotTags: [
         '#playwright',
@@ -153,6 +153,7 @@ export default {
       skills: [],
       loading: false,
       totalSkills: 0,
+      _lastLanguage: '', // 记录上次的语言，避免重复更新
     }
   },
   computed: {
@@ -168,21 +169,6 @@ export default {
       }
       return sortMap[this.sortBy] || '排序'
     },
-  },
-  data() {
-    return {
-      searchQuery: '',
-      searchTimer: null,
-      searchHistory: [],
-      selectedCategory: 'all',
-      sortBy: 'stars',
-      categories: [],
-      hotTags: [],
-      skills: [],
-      loading: false,
-      totalSkills: 0,
-      _lastLanguage: '', // 记录上次的语言，避免重复更新
-    }
   },
   onLoad() {
     // 初始化 TabBar 语言
@@ -226,12 +212,14 @@ export default {
 
         // 添加其他分类
         res.categories.forEach(cat => {
-          this.categories.push({
-            id: cat.category,
-            name: cat.category.charAt(0).toUpperCase() + cat.category.slice(1),
-            icon: categoryIcons[cat.category] || '📦',
-            count: cat.count
-          })
+          if (cat.category) {
+            this.categories.push({
+              id: cat.category,
+              name: cat.category.charAt(0).toUpperCase() + cat.category.slice(1),
+              icon: categoryIcons[cat.category] || '📦',
+              count: cat.count
+            })
+          }
         })
       } catch (error) {
         console.error('加载分类失败', error)

@@ -8,15 +8,16 @@
           <text class="prompt-text">claude-skills</text>
           <text class="terminal-cursor"></text>
         </view>
-        <view class="header-stats">
-          <view class="stat-item">
-            <text class="stat-value">{{ totalSkills }}</text>
-            <text class="stat-label">skills</text>
+        <view class="header-right">
+          <view class="header-stats">
+            <view class="stat-item">
+              <text class="stat-value">{{ totalSkills }}</text>
+              <text class="stat-label">skills</text>
+            </view>
           </view>
-          <view class="stat-divider"></view>
-          <view class="stat-item">
-            <text class="stat-value">{{ onlineUsers }}</text>
-            <text class="stat-label">online</text>
+          <!-- Language Switch Button -->
+          <view class="language-switch" @click="switchLanguage">
+            <text class="lang-icon">{{ currentLang === 'zh' ? '中' : 'EN' }}</text>
           </view>
         </view>
       </view>
@@ -33,7 +34,7 @@
           :style="{ animationDelay: `${index * 50}ms` }"
         >
           <text class="category-icon">{{ category.icon }}</text>
-          <text class="category-name">{{ category.name }}</text>
+          <text class="category-name">{{ currentLang === 'zh' ? category.name : category.name_en }}</text>
         </view>
       </view>
     </scroll-view>
@@ -72,11 +73,14 @@
         <!-- Skill Title -->
         <view class="skill-title-row">
           <text class="terminal-prefix">></text>
-          <text class="skill-name">{{ skill.name }}</text>
+          <view class="title-container">
+            <text class="skill-name">{{ getDisplayName(skill) }}</text>
+            <text v-if="currentLang === 'zh' && skill.name_zh" class="skill-name-en">{{ skill.name }}</text>
+          </view>
         </view>
 
         <!-- Skill Description -->
-        <text class="skill-description">{{ skill.description }}</text>
+        <text class="skill-description">{{ getDisplayDescription(skill) }}</text>
 
         <!-- Skill Tags -->
         <view class="skill-tags">
@@ -132,25 +136,79 @@
 <script>
 import { getSkillsList, getCategories, addFavorite, removeFavorite, checkFavorite } from '../../utils/api.js'
 import { getCurrentUserId, requireLogin } from '../../utils/login.js'
+import { getCurrentLanguage, toggleLanguage, updateTabBarLanguage, getSkillName, getSkillDescription } from '../../utils/language.js'
 
 export default {
   data() {
     return {
       totalSkills: 0,
-      onlineUsers: 42,
       selectedCategory: 'all',
       refreshing: false,
       loading: false,
       hasMore: true,
       currentPage: 1,
       pageSize: 20,
+      currentLang: 'zh', // 当前语言
       categories: [
-        { id: 'all', name: 'All', icon: '🌐' },
+        { id: 'all', name: '全部', icon: '🌐', name_en: 'All' },
+        { id: 'frontend', name: '前端', icon: '🎨', name_en: 'Frontend' },
+        { id: 'backend', name: '后端', icon: '⚙️', name_en: 'Backend' },
+        { id: 'testing', name: '测试', icon: '🧪', name_en: 'Testing' },
+        { id: 'debugging', name: '调试', icon: '🐛', name_en: 'Debugging' },
+        { id: 'devops', name: 'DevOps', icon: '🚀', name_en: 'DevOps' },
+        { id: 'documentation', name: '文档', icon: '📝', name_en: 'Docs' },
+        { id: 'automation', name: '自动化', icon: '🤖', name_en: 'Automation' },
+        { id: 'machine_learning', name: 'AI/ML', icon: '🧠', name_en: 'AI/ML' },
+        { id: 'database', name: '数据库', icon: '🗄️', name_en: 'Database' },
+        { id: 'security', name: '安全', icon: '🔒', name_en: 'Security' },
+        { id: 'performance', name: '性能', icon: '⚡', name_en: 'Performance' },
       ],
       skills: [],
     }
   },
   methods: {
+    /**
+     * 切换语言
+     */
+    switchLanguage() {
+      console.log('\n' + '='.repeat(50))
+      console.log('🌐 [首页] 用户点击语言切换按钮')
+      console.log('🕐 时间:', new Date().toISOString())
+      console.log('📍 当前页面语言状态:', this.currentLang)
+
+      const newLang = toggleLanguage()
+
+      console.log('📍 新语言:', newLang)
+      console.log('🔄 更新页面状态...')
+
+      this.currentLang = newLang
+
+      console.log('✅ 页面状态已更新为:', this.currentLang)
+
+      uni.showToast({
+        title: newLang === 'zh' ? '切换到中文' : 'Switch to English',
+        icon: 'success',
+        duration: 1500,
+      })
+
+      console.log('✅ Toast 已显示')
+      console.log('='.repeat(50) + '\n')
+    },
+
+    /**
+     * 获取显示名称（根据语言）
+     */
+    getDisplayName(skill) {
+      return getSkillName(skill, this.currentLang)
+    },
+
+    /**
+     * 获取显示描述（根据语言）
+     */
+    getDisplayDescription(skill) {
+      return getSkillDescription(skill, this.currentLang)
+    },
+
     /**
      * 格式化数字（如 24500 -> 24.5k）
      */
@@ -171,7 +229,7 @@ export default {
         if (res && res.categories) {
           // 添加 All 分类
           const allCategories = [
-            { id: 'all', name: 'All', icon: '🌐' },
+            { id: 'all', name: '全部', name_en: 'All', icon: '🌐' },
           ]
 
           // 映射分类图标
@@ -184,13 +242,39 @@ export default {
             design: '🎨',
             data_analysis: '📊',
             devops: '⚙️',
+            frontend: '🎨',
+            backend: '⚙️',
+            database: '🗄️',
+            security: '🔒',
+            performance: '⚡',
+            machine_learning: '🧠',
             other: '📦',
+          }
+
+          // 分类中文名称映射
+          const nameZhMap = {
+            debugging: '调试',
+            testing: '测试',
+            automation: '自动化',
+            development: '开发',
+            documentation: '文档',
+            design: '设计',
+            data_analysis: '数据分析',
+            devops: 'DevOps',
+            frontend: '前端',
+            backend: '后端',
+            database: '数据库',
+            security: '安全',
+            performance: '性能',
+            machine_learning: 'AI/ML',
+            other: '其他',
           }
 
           res.categories.forEach((cat) => {
             allCategories.push({
               id: cat.value,
-              name: cat.label,
+              name: nameZhMap[cat.value] || cat.label,
+              name_en: cat.label,
               icon: iconMap[cat.value] || '📦',
             })
           })
@@ -236,12 +320,14 @@ export default {
           const newSkills = (res.items || []).map((skill) => ({
             id: skill.id,
             name: skill.name,
+            name_zh: skill.name_zh || '',
             author: skill.author,
             authorAvatar: `https://avatars.githubusercontent.com/u/${skill.id}`,
             category: skill.category,
             badge: skill.is_official ? 'OFFICIAL' : (skill.stars > 50000 ? 'POPULAR' : 'NEW'),
             badgeType: skill.is_official ? 'cyan' : (skill.stars > 50000 ? 'purple' : 'green'),
             description: skill.description,
+            description_zh: skill.description_zh || '',
             tags: skill.tags || [],
             stars: this.formatNumber(skill.stars),
             forks: this.formatNumber(skill.forks),
@@ -395,8 +481,45 @@ export default {
    * 页面加载时初始化
    */
   async mounted() {
+    // 初始化语言设置
+    this.currentLang = getCurrentLanguage()
+
+    // 初始化 TabBar 语言
+    updateTabBarLanguage(this.currentLang)
+
     await this.loadCategories()
     await this.loadSkills(true)
+  },
+
+  onShow() {
+    // 每次显示页面时更新语言和 TabBar（防止从其他页面返回时语言不一致）
+    const latestLang = getCurrentLanguage()
+    if (latestLang !== this.currentLang) {
+      this.currentLang = latestLang
+      updateTabBarLanguage(latestLang)
+    }
+  },
+
+  /**
+   * 分享给朋友
+   */
+  onShareAppMessage() {
+    return {
+      title: 'Claude Skills - 技能市场',
+      path: '/pages/index/index',
+      imageUrl: '', // 可以自定义分享图片
+    }
+  },
+
+  /**
+   * 分享到朋友圈
+   */
+  onShareTimeline() {
+    return {
+      title: 'Claude Skills - 发现优质 Claude Code 技能',
+      query: '',
+      imageUrl: '', // 可以自定义分享图片
+    }
   },
 }
 </script>
@@ -426,6 +549,12 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 24rpx;
 }
 
 .terminal-prompt {
@@ -477,6 +606,33 @@ export default {
   width: 2rpx;
   height: 32rpx;
   background: var(--border-medium);
+}
+
+/* Language Switch Button */
+.language-switch {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: var(--bg-tertiary);
+  border: 2rpx solid var(--border-medium);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-base);
+}
+
+.language-switch:active {
+  transform: scale(0.95);
+  background: rgba(0, 217, 255, 0.1);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 16rpx rgba(0, 217, 255, 0.3);
+}
+
+.lang-icon {
+  font-size: 22rpx;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  letter-spacing: -1rpx;
 }
 
 /* Category Scroll */
@@ -643,7 +799,7 @@ export default {
 /* Skill Title */
 .skill-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12rpx;
   margin-bottom: var(--spacing-sm);
 }
@@ -652,6 +808,15 @@ export default {
   color: var(--terminal-green);
   font-size: 32rpx;
   font-weight: 700;
+  line-height: 1.2;
+  margin-top: 4rpx;
+}
+
+.title-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+  flex: 1;
 }
 
 .skill-name {
@@ -659,6 +824,16 @@ export default {
   font-weight: 700;
   color: var(--text-primary);
   letter-spacing: 1rpx;
+  line-height: 1.3;
+}
+
+.skill-name-en {
+  font-size: 22rpx;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  letter-spacing: 0.5rpx;
+  opacity: 0.8;
 }
 
 /* Skill Description */
