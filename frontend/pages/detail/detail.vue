@@ -5,9 +5,14 @@
       <view class="nav-back" @click="goBack">
         <text class="nav-icon">←</text>
       </view>
-      <view class="nav-title">{{ skill.name || '技能详情' }}</view>
-      <view class="nav-share" @click="onShare">
-        <text class="nav-icon">⤴</text>
+      <view class="nav-title">{{ getDisplayName(skill) || '技能详情' }}</view>
+      <view class="nav-actions">
+        <view class="language-switch-small" @click="switchLanguage">
+          <text class="lang-text">{{ currentLang === 'zh' ? '中' : 'EN' }}</text>
+        </view>
+        <view class="nav-share" @click="onShare">
+          <text class="nav-icon">⤴</text>
+        </view>
       </view>
     </view>
 
@@ -25,11 +30,14 @@
       </view>
 
       <view class="skill-title">
-        <text class="prompt-symbol">></text>
-        <text class="skill-name">{{ skill.name }}</text>
+        <text class="prompt-symbol">&gt;</text>
+        <view class="title-group">
+          <text class="skill-name-main">{{ getDisplayName(skill) }}</text>
+          <text v-if="currentLang === 'zh' && skill.name_zh" class="skill-name-sub">{{ skill.name }}</text>
+        </view>
       </view>
 
-      <text class="skill-description">{{ skill.description }}</text>
+      <text class="skill-description">{{ getDisplayDescription(skill) }}</text>
 
       <!-- GitHub 统计 -->
       <view class="skill-stats">
@@ -56,17 +64,26 @@
       <text v-for="tag in skill.tags" :key="tag" class="tag">{{ tag }}</text>
     </view>
 
-    <!-- 安装命令区域 -->
+    <!-- 安装和使用区域 -->
     <view class="install-section">
       <view class="section-header">
         <text class="section-icon">📦</text>
         <text class="section-title">安装命令</text>
       </view>
+
+      <!-- 安装命令 -->
       <view class="install-command" @click="copyCommand">
         <text class="command-text">{{ skill.installCommand }}</text>
         <text class="copy-icon">📋</text>
       </view>
       <text class="install-hint">点击复制安装命令</text>
+
+      <!-- GitHub 链接 -->
+      <view v-if="skill.githubUrl" class="github-link" @click="copyGithubUrl">
+        <text class="github-icon">🔗</text>
+        <text class="github-text">复制 GitHub 链接</text>
+        <text class="github-arrow">📋</text>
+      </view>
     </view>
 
     <!-- Markdown 内容区域 -->
@@ -74,9 +91,13 @@
       <view class="section-header">
         <text class="section-icon">📄</text>
         <text class="section-title">详细说明</text>
+        <!-- 内容语言切换按钮 -->
+        <view v-if="(skill.skill_md_zh || skill.content_zh) && (skill.skill_md || skill.content)" class="content-lang-toggle" @click="toggleContentLang">
+          <text class="toggle-text">{{ showZhContent ? '查看英文' : '查看中文' }}</text>
+        </view>
       </view>
       <view class="markdown-content">
-        <text class="markdown-text">{{ skill.content || '暂无详细说明，请访问 GitHub 仓库查看完整文档。' }}</text>
+        <text class="markdown-text">{{ getDisplayContent() }}</text>
       </view>
     </view>
 
@@ -108,39 +129,133 @@
 <script>
 import { getSkillDetail, shareSkill, addFavorite, removeFavorite, checkFavorite, getSkillsList } from '../../utils/api.js'
 import { requireLogin, getCurrentUserId } from '../../utils/login.js'
+import { getCurrentLanguage, toggleLanguage, getSkillName, getSkillDescription, getSkillContent } from '../../utils/language.js'
 
 export default {
   data() {
     return {
       skillId: null,
+      currentLang: 'zh', // 当前语言
+      showZhContent: true, // Markdown 内容是否显示中文（独立于全局语言）
       skill: {
         id: null,
         name: '',
+        name_zh: '',
         author: '',
         authorAvatar: '',
         category: '',
         badge: '',
         badgeType: '',
         description: '',
+        description_zh: '',
         tags: [],
         stars: '0',
         forks: '0',
         downloads: '0',
         isFavorited: false,
+        githubUrl: '',
         installCommand: '',
         content: '',
+        content_zh: '',
+        skill_md: '',  // 完整的 SKILL.md 原文
+        skill_md_zh: '',  // 完整的 SKILL.md 中文翻译
       },
       relatedSkills: [],
       loading: false,
     }
   },
   onLoad(options) {
+    // 初始化语言设置
+    this.currentLang = getCurrentLanguage()
+    this.showZhContent = this.currentLang === 'zh'
+
     if (options.id) {
       this.skillId = parseInt(options.id)
       this.loadSkill(this.skillId)
     }
   },
   methods: {
+    /**
+     * 切换全局语言
+     */
+    switchLanguage() {
+      console.log('\n' + '='.repeat(50))
+      console.log('🌐 [详情页] 用户点击语言切换按钮')
+      console.log('🕐 时间:', new Date().toISOString())
+      console.log('📍 当前页面语言状态:', this.currentLang)
+      console.log('📍 当前内容显示语言:', this.showZhContent ? '中文' : '英文')
+
+      const newLang = toggleLanguage()
+
+      console.log('📍 新语言:', newLang)
+      console.log('🔄 更新页面状态...')
+
+      this.currentLang = newLang
+      // 同步内容显示语言
+      this.showZhContent = newLang === 'zh'
+
+      console.log('✅ 页面语言已更新为:', this.currentLang)
+      console.log('✅ 内容显示语言已更新为:', this.showZhContent ? '中文' : '英文')
+
+      uni.showToast({
+        title: newLang === 'zh' ? '切换到中文' : 'Switch to English',
+        icon: 'success',
+        duration: 1500,
+      })
+
+      console.log('✅ Toast 已显示')
+      console.log('='.repeat(50) + '\n')
+    },
+
+    /**
+     * 切换内容语言（独立于全局语言）
+     */
+    toggleContentLang() {
+      this.showZhContent = !this.showZhContent
+      uni.showToast({
+        title: this.showZhContent ? '切换到中文内容' : 'Switch to English Content',
+        icon: 'success',
+        duration: 1500,
+      })
+    },
+
+    /**
+     * 获取显示名称（根据语言）
+     */
+    getDisplayName(skill) {
+      return getSkillName(skill, this.currentLang)
+    },
+
+    /**
+     * 获取显示描述（根据语言）
+     */
+    getDisplayDescription(skill) {
+      return getSkillDescription(skill, this.currentLang)
+    },
+
+    /**
+     * 获取显示内容（根据 showZhContent 状态）
+     * 优先显示 skill_md，如果没有则回退到 content
+     */
+    getDisplayContent() {
+      if (this.showZhContent) {
+        // 优先显示完整的 SKILL.md 中文翻译
+        if (this.skill.skill_md_zh) {
+          return this.skill.skill_md_zh
+        }
+        // 回退到简短的中文描述
+        if (this.skill.content_zh) {
+          return this.skill.content_zh
+        }
+      }
+      // 优先显示完整的 SKILL.md 原文
+      if (this.skill.skill_md) {
+        return this.skill.skill_md
+      }
+      // 回退到简短的英文描述
+      return this.skill.content || '暂无详细说明，请访问 GitHub 仓库查看完整文档。'
+    },
+
     async loadSkill(id) {
       if (this.loading) return
 
@@ -154,19 +269,25 @@ export default {
         this.skill = {
           id: skillData.id,
           name: skillData.name,
+          name_zh: skillData.name_zh || '',
           author: skillData.author || 'Unknown',
           authorAvatar: `https://avatars.githubusercontent.com/u/${skillData.id}?v=4`,
           category: skillData.category || 'general',
           badge: skillData.is_official ? 'OFFICIAL' : '',
           badgeType: skillData.is_official ? 'cyan' : '',
           description: skillData.description || '暂无描述',
+          description_zh: skillData.description_zh || '',
           tags: this.parseTags(skillData.tags),
           stars: this.formatNumber(skillData.stars || 0),
           forks: this.formatNumber(skillData.forks || 0),
           downloads: this.formatNumber(skillData.view_count || 0),
           isFavorited: false,
+          githubUrl: skillData.github_url || '',
           installCommand: skillData.install_command || `claude skill install ${skillData.github_url}`,
-          content: skillData.content || '暂无详细说明，请访问 GitHub 仓库查看完整文档。',
+          content: skillData.content || '暂无详细说明',
+          content_zh: skillData.content_zh || '',
+          skill_md: skillData.skill_md || '',  // 完整的 SKILL.md 原文
+          skill_md_zh: skillData.skill_md_zh || '',  // 完整的 SKILL.md 中文翻译
         }
 
         // 检查是否已收藏
@@ -320,10 +441,55 @@ export default {
       })
     },
 
+    // 复制 GitHub 链接
+    copyGithubUrl() {
+      if (!this.skill.githubUrl) {
+        uni.showToast({
+          title: '暂无 GitHub 链接',
+          icon: 'none',
+        })
+        return
+      }
+
+      uni.setClipboardData({
+        data: this.skill.githubUrl,
+        success: () => {
+          uni.showToast({
+            title: 'GitHub 链接已复制',
+            icon: 'success',
+          })
+        },
+      })
+    },
+
     goToSkill(id) {
       uni.redirectTo({
         url: `/pages/detail/detail?id=${id}`,
       })
+    },
+
+    /**
+     * 分享给朋友
+     */
+    onShareAppMessage() {
+      const skillName = this.getDisplayName(this.skill) || this.skill.name || '技能详情'
+      return {
+        title: `推荐技能：${skillName}`,
+        path: `/pages/detail/detail?id=${this.skillId}`,
+        imageUrl: this.skill.authorAvatar || '',
+      }
+    },
+
+    /**
+     * 分享到朋友圈
+     */
+    onShareTimeline() {
+      const skillName = this.getDisplayName(this.skill) || this.skill.name || '技能详情'
+      return {
+        title: `Claude Skills - ${skillName}`,
+        query: `id=${this.skillId}`,
+        imageUrl: this.skill.authorAvatar || '',
+      }
     },
   },
 }
@@ -354,6 +520,12 @@ export default {
   border-bottom: 1rpx solid rgba(0, 217, 255, 0.1);
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
 .nav-back,
 .nav-share {
   width: 64rpx;
@@ -371,6 +543,31 @@ export default {
   }
 }
 
+.language-switch-small {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(0, 217, 255, 0.1);
+  border: 2rpx solid rgba(0, 217, 255, 0.3);
+  transition: all 0.3s;
+
+  &:active {
+    background: rgba(0, 217, 255, 0.2);
+    border-color: var(--primary-cyan);
+    transform: scale(0.95);
+  }
+}
+
+.lang-text {
+  font-size: 20rpx;
+  font-weight: 700;
+  color: var(--primary-cyan);
+  letter-spacing: -1rpx;
+}
+
 .nav-icon {
   font-size: 36rpx;
   color: var(--primary-cyan);
@@ -379,10 +576,14 @@ export default {
 .nav-title {
   flex: 1;
   text-align: center;
-  font-size: 32rpx;
+  font-size: 28rpx;
   font-weight: 600;
   color: var(--text-primary);
   font-family: 'Courier New', monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 0 16rpx;
 }
 
 /* 技能头部信息 */
@@ -448,7 +649,7 @@ export default {
 
 .skill-title {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 12rpx;
   margin-bottom: 16rpx;
 }
@@ -457,6 +658,31 @@ export default {
   font-size: 32rpx;
   color: var(--terminal-green);
   font-family: 'Courier New', monospace;
+  line-height: 1.2;
+  margin-top: 4rpx;
+}
+
+.title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+  flex: 1;
+}
+
+.skill-name-main {
+  font-size: 40rpx;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.skill-name-sub {
+  font-size: 24rpx;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  letter-spacing: 0.5rpx;
+  opacity: 0.8;
 }
 
 .skill-name {
@@ -546,8 +772,10 @@ export default {
 .section-header {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12rpx;
   margin-bottom: 24rpx;
+  flex-wrap: wrap;
 }
 
 .section-icon {
@@ -558,6 +786,28 @@ export default {
   font-size: 32rpx;
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.content-lang-toggle {
+  padding: 8rpx 16rpx;
+  border-radius: 24rpx;
+  background: rgba(0, 217, 255, 0.1);
+  border: 1rpx solid rgba(0, 217, 255, 0.3);
+  transition: all 0.3s;
+  cursor: pointer;
+
+  &:active {
+    background: rgba(0, 217, 255, 0.2);
+    border-color: var(--primary-cyan);
+    transform: scale(0.95);
+  }
+}
+
+.toggle-text {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: var(--primary-cyan);
+  white-space: nowrap;
 }
 
 /* 安装命令区域 */
@@ -598,22 +848,61 @@ export default {
   font-size: 22rpx;
   color: var(--text-tertiary);
   text-align: center;
+  margin-bottom: 24rpx;
+}
+
+.github-link {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  padding: 20rpx 24rpx;
+  background: rgba(0, 217, 255, 0.05);
+  border: 2rpx solid rgba(0, 217, 255, 0.2);
+  border-radius: 16rpx;
+  transition: all 0.3s;
+}
+
+.github-link:active {
+  background: rgba(0, 217, 255, 0.1);
+  border-color: var(--neon-cyan);
+  transform: scale(0.98);
+}
+
+.github-icon {
+  font-size: 32rpx;
+}
+
+.github-text {
+  flex: 1;
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--neon-cyan);
+}
+
+.github-arrow {
+  font-size: 28rpx;
+  color: var(--neon-cyan);
+  opacity: 0.6;
 }
 
 /* Markdown 内容区域 */
 .markdown-content {
-  padding: 24rpx;
+  padding: 32rpx;
   background: rgba(0, 217, 255, 0.03);
   border-radius: 16rpx;
   border: 1rpx solid rgba(0, 217, 255, 0.1);
+  max-height: 1200rpx;
+  overflow-y: auto;
 }
 
 .markdown-text {
-  font-size: 28rpx;
-  line-height: 1.8;
+  font-size: 26rpx;
+  line-height: 2;
   color: var(--text-secondary);
   white-space: pre-wrap;
   word-break: break-word;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', 'Courier New', monospace;
+  letter-spacing: 0.5rpx;
 }
 
 /* 相关推荐 */

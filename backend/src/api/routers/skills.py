@@ -21,8 +21,10 @@ class SkillListResponse(BaseModel):
 
     id: int
     name: str
+    name_zh: Optional[str] = None
     slug: str
     description: str
+    description_zh: Optional[str] = None
     author: str
     category: str
     tags: Optional[list[str]] = None
@@ -42,14 +44,19 @@ class SkillDetailResponse(BaseModel):
 
     id: int
     name: str
+    name_zh: Optional[str] = None
     slug: str
     description: str
+    description_zh: Optional[str] = None
     author: str
     github_url: str
     github_repo: Optional[str] = None
     category: str
     tags: Optional[list[str]] = None
     content: str
+    content_zh: Optional[str] = None
+    skill_md: Optional[str] = None  # 完整的 SKILL.md 原文
+    skill_md_zh: Optional[str] = None  # 完整的 SKILL.md 中文翻译
     install_command: str
     stars: int
     forks: int
@@ -122,8 +129,10 @@ async def list_skills(
                 SkillListResponse(
                     id=skill.id,
                     name=skill.name,
+                    name_zh=skill.name_zh,
                     slug=skill.slug,
                     description=skill.description,
+                    description_zh=skill.description_zh,
                     author=skill.author,
                     category=skill.category.value,
                     tags=skill.tags if isinstance(skill.tags, list) else [],
@@ -171,14 +180,19 @@ async def get_skill_detail(skill_id: int):
             return SkillDetailResponse(
                 id=skill.id,
                 name=skill.name,
+                name_zh=skill.name_zh,
                 slug=skill.slug,
                 description=skill.description,
+                description_zh=skill.description_zh,
                 author=skill.author,
                 github_url=skill.github_url,
                 github_repo=skill.github_repo,
                 category=skill.category.value,
                 tags=skill.tags if isinstance(skill.tags, list) else [],
                 content=skill.content,
+                content_zh=skill.content_zh,
+                skill_md=skill.skill_md,  # 完整的 SKILL.md 原文
+                skill_md_zh=skill.skill_md_zh,  # 完整的 SKILL.md 中文翻译
                 install_command=skill.install_command,
                 stars=skill.stars,
                 forks=skill.forks,

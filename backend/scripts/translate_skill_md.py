@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-持续更新技能完整内容 - 支持断点续传
+持续翻译 skill_md 字段 - 支持断点续传
 """
 import asyncio
 import sys
 from pathlib import Path
-import aiohttp
 import logging
 import json
 from datetime import datetime
@@ -16,9 +15,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from sqlalchemy import text
 from src.storage.database import get_session, SkillRepository
+from src.services.ai_translation import translate_text
 
 # 配置日志
-log_file = Path(__file__).parent.parent / "logs" / f"content_update_{datetime.now().strftime('%Y%m%d')}.log"
+log_file = Path(__file__).parent.parent / "logs" / f"skill_md_translation_{datetime.now().strftime('%Y%m%d')}.log"
 log_file.parent.mkdir(exist_ok=True)
 
 logging.basicConfig(
@@ -31,7 +31,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-PROGRESS_FILE = Path(__file__).parent.parent / "logs" / "content_update_progress.json"
+PROGRESS_FILE = Path(__file__).parent.parent / "logs" / "skill_md_translation_progress.json"
 
 class ProgressTracker:
     def __init__(self, progress_file: Path):
@@ -55,7 +55,8 @@ class ProgressTracker:
             'success_count': 0,
             'failed_count': 0,
             'skipped_count': 0,
-            'failed_ids': []
+            'failed_ids': [],
+            'total_chars_translated': 0
         }
 
     def save(self):
@@ -67,10 +68,11 @@ class ProgressTracker:
     def is_processed(self, skill_id: int) -> bool:
         return skill_id in self.data['processed_ids']
 
-    def mark_success(self, skill_id: int):
+    def mark_success(self, skill_id: int, char_count: int = 0):
         if skill_id not in self.data['processed_ids']:
             self.data['processed_ids'].append(skill_id)
         self.data['success_count'] += 1
+        self.data['total_chars_translated'] += char_count
         if skill_id in self.data['failed_ids']:
             self.data['failed_ids'].remove(skill_id)
         self.save()
@@ -89,67 +91,48 @@ class ProgressTracker:
         self.data['skipped_count'] += 1
         self.save()
 
-async def fetch_skill_content_from_github(github_url: str) -> tuple[str, str]:
+
+async def translate_skill_md_content(skill_md: str) -> tuple[str, str]:
     """
-    从 GitHub 获取 SKILL.md 内容
+    翻译 SKILL.md 内容
 
     Returns:
-        tuple[str, str]: (content, error_message)
-        - content: SKILL.md 内容，失败时为空字符串
+        tuple[str, str]: (translated_content, error_message)
+        - translated_content: 翻译后的内容，失败时为空字符串
         - error_message: 错误信息，成功时为空字符串
     """
-    if not github_url or 'github.com' not in github_url:
-        return '', 'invalid_url'
+    if not skill_md or not skill_md.strip():
+        return '', 'empty_content'
 
     try:
-        if '/tree/' not in github_url:
-            return '', 'no_tree_in_url'
+        # 使用 AI 翻译服务
+        translated = await translate_text(skill_md, source_lang='en', target_lang='zh')
 
-        parts = github_url.split('/tree/')
-        if len(parts) != 2:
-            return '', 'parse_error'
+        if translated and len(translated) > 0:
+            return translated, ''
+        else:
+            return '', 'translation_failed'
 
-        base_url = parts[0]
-        branch_and_path = parts[1]
-        path_parts = branch_and_path.split('/', 1)
-
-        if len(path_parts) != 2:
-            return '', 'parse_error'
-
-        branch = path_parts[0]
-        path = path_parts[1]
-        base_parts = base_url.replace('https://github.com/', '').split('/')
-
-        if len(base_parts) < 2:
-            return '', 'parse_error'
-
-        owner = base_parts[0]
-        repo = base_parts[1]
-        raw_url = f'https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}/SKILL.md'
-
-        timeout = aiohttp.ClientTimeout(total=30)
-        async with aiohttp.ClientSession(timeout=timeout) as session:
-            async with session.get(raw_url) as response:
-                if response.status == 200:
-                    content = await response.text()
-                    return content, ''
-                elif response.status == 404:
-                    return '', 'file_not_found'
-                else:
-                    return '', f'http_{response.status}'
-
-    except asyncio.TimeoutError:
-        return '', 'timeout'
-    except aiohttp.ClientError as e:
-        return '', f'network_error: {type(e).__name__}'
     except Exception as e:
-        return '', f'unknown_error: {type(e).__name__}'
+        error_type = type(e).__name__
+        error_msg = str(e)
 
-    return '', 'unknown_error'
+        # 识别常见错误
+        if 'rate_limit' in error_msg.lower() or '429' in error_msg:
+            return '', 'rate_limit'
+        elif 'overloaded' in error_msg.lower() or '529' in error_msg:
+            return '', 'overloaded'
+        elif 'timeout' in error_msg.lower():
+            return '', 'timeout'
+        elif 'connection' in error_msg.lower():
+            return '', 'network_error'
+        else:
+            return '', f'{error_type}: {error_msg[:100]}'
 
-async def continuous_update(min_length: int = 300, batch_size: int = 50, delay_between_requests: float = 1.0):
+
+async def continuous_translate(batch_size: int = 20, delay_between_requests: float = 3.0):
     logger.info("=" * 60)
-    logger.info("开始持续更新技能内容")
+    logger.info("开始持续翻译 skill_md 字段")
     logger.info("=" * 60)
 
     tracker = ProgressTracker(PROGRESS_FILE)
@@ -159,16 +142,17 @@ async def continuous_update(min_length: int = 300, batch_size: int = 50, delay_b
     logger.info(f"  成功: {tracker.data['success_count']}")
     logger.info(f"  失败: {tracker.data['failed_count']}")
     logger.info(f"  跳过: {tracker.data['skipped_count']}")
+    logger.info(f"  累计翻译字符数: {tracker.data['total_chars_translated']:,}")
 
     async with get_session() as session:
         repo = SkillRepository(session)
 
-        query = text(f"""
-            SELECT id, name, github_url, LENGTH(COALESCE(skill_md, '')) as skill_md_len
+        query = text("""
+            SELECT id, name, skill_md, LENGTH(skill_md) as skill_md_len
             FROM skills
-            WHERE (skill_md IS NULL OR skill_md = '')
-            AND github_url != ''
-            AND github_url LIKE '%github.com%'
+            WHERE skill_md IS NOT NULL
+            AND skill_md != ''
+            AND (skill_md_zh IS NULL OR skill_md_zh = '')
             ORDER BY stars DESC, id ASC
         """)
 
@@ -181,53 +165,82 @@ async def continuous_update(min_length: int = 300, batch_size: int = 50, delay_b
         logger.info(f"\n本次处理: {total} 个")
 
         if total == 0:
-            logger.info("✅ 所有技能内容已更新完成！")
+            logger.info("✅ 所有 skill_md 已翻译完成！")
             return
 
         start_time = time.time()
+        consecutive_errors = 0
+        max_consecutive_errors = 5
 
         for i, skill in enumerate(skills_to_process, 1):
             try:
-                logger.info(f"[{i}/{total}] ID:{skill.id} {skill.name}")
+                logger.info(f"[{i}/{total}] ID:{skill.id} {skill.name} ({skill.skill_md_len} 字符)")
 
-                content, error = await fetch_skill_content_from_github(skill.github_url)
+                translated_content, error = await translate_skill_md_content(skill.skill_md)
 
-                if content and len(content) > skill.skill_md_len:
-                    # 保存到skill_md字段，不覆盖原有的content
-                    await repo.update(skill.id, {'skill_md': content})
+                if translated_content:
+                    # 保存翻译结果到 skill_md_zh 字段
+                    await repo.update(skill.id, {'skill_md_zh': translated_content})
                     await session.commit()
-                    tracker.mark_success(skill.id)
-                    logger.info(f"  ✅ 成功: {skill.skill_md_len} → {len(content)} 字符")
-                elif content:
-                    tracker.mark_skipped(skill.id)
-                    logger.info(f"  ⏭️ 跳过: 内容未增长")
+                    tracker.mark_success(skill.id, skill.skill_md_len)
+                    consecutive_errors = 0
+                    logger.info(f"  ✅ 成功: {skill.skill_md_len} → {len(translated_content)} 字符")
                 else:
                     tracker.mark_failed(skill.id)
+                    consecutive_errors += 1
                     logger.warning(f"  ❌ 失败: {error}")
 
+                    # 如果是速率限制或过载，等待更长时间
+                    if error == 'rate_limit':
+                        logger.warning(f"  ⏳ 触发速率限制，等待 60 秒...")
+                        await asyncio.sleep(60)
+                        consecutive_errors = 0
+                    elif error == 'overloaded':
+                        logger.warning(f"  ⏳ API 过载，等待 30 秒...")
+                        await asyncio.sleep(30)
+                        consecutive_errors = 0
+
+                # 检查连续错误次数
+                if consecutive_errors >= max_consecutive_errors:
+                    logger.error(f"\n❌ 连续 {max_consecutive_errors} 次错误，暂停任务")
+                    logger.error(f"请检查 API 配置和网络连接")
+                    break
+
+                # 正常延迟
                 await asyncio.sleep(delay_between_requests)
 
                 if i % batch_size == 0:
                     elapsed = time.time() - start_time
                     avg_time = elapsed / i
                     remaining = (total - i) * avg_time
-                    logger.info(f"\n进度: {i}/{total} ({i/total*100:.1f}%)")
+                    logger.info(f"\n���度: {i}/{total} ({i/total*100:.1f}%)")
                     logger.info(f"成功: {tracker.data['success_count']}, 失败: {tracker.data['failed_count']}")
+                    logger.info(f"累计翻译: {tracker.data['total_chars_translated']:,} 字符")
                     logger.info(f"预计剩余时间: {int(remaining/60)} 分钟\n")
 
             except Exception as e:
                 logger.error(f"  ❌ 异常: {e}")
                 tracker.mark_failed(skill.id)
+                consecutive_errors += 1
 
-        logger.info("\n✅ 更新完成！")
+                if consecutive_errors >= max_consecutive_errors:
+                    logger.error(f"\n❌ 连续 {max_consecutive_errors} 次异常，暂停任务")
+                    break
+
+        logger.info("\n✅ 翻译任务结束！")
+        logger.info(f"成功: {tracker.data['success_count']}")
+        logger.info(f"失败: {tracker.data['failed_count']}")
+        logger.info(f"总计翻译字符数: {tracker.data['total_chars_translated']:,}")
+
 
 async def main():
     try:
-        await continuous_update()
+        await continuous_translate()
     except KeyboardInterrupt:
         logger.info("\n中断，进度已保存")
     except Exception as e:
         logger.error(f"\n异常: {e}")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
