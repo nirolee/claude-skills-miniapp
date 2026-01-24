@@ -18,11 +18,11 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 
-async def crawl_all_skills_browser(batch_size=500):
+async def crawl_all_skills_browser(batch_size=100):
     """在浏览器上下文内爬取所有技能，支持分批保存
 
     Args:
-        batch_size: 每爬取多少页就保存一次到数据库，默认500页
+        batch_size: 每爬取多少页就保存一次到数据库，默认100页
     """
     logger.info("=== 开始爬取 SkillsMP 所有技能 ===\n")
 
@@ -351,7 +351,7 @@ async def save_skills_to_db(skills_data: list):
 
 async def main():
     # 爬取所有技能（已在爬取过程中分批保存到数据库）
-    skills = await crawl_all_skills_browser(batch_size=500)
+    skills = await crawl_all_skills_browser(batch_size=100)
 
     if not skills:
         logger.error("未获取到任何技能！")
