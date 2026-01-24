@@ -255,7 +255,9 @@ async def save_skills_to_db(skills_data: list):
             try:
                 # 提取字段（根据实际 API 响应调整）
                 name = skill_data.get('name') or skill_data.get('title') or 'Unknown'
-                slug = skill_data.get('slug') or skill_data.get('id') or name.lower().replace(' ', '-')
+                raw_slug = skill_data.get('slug') or skill_data.get('id') or name.lower().replace(' ', '-')
+                # 限制 slug 长度，避免数据库错误
+                slug = raw_slug[:490] if len(raw_slug) > 490 else raw_slug
                 description = skill_data.get('description', '')
                 author = skill_data.get('author') or skill_data.get('owner') or 'Unknown'
                 github_url = skill_data.get('github_url') or skill_data.get('url') or skill_data.get('repositoryUrl') or ''
@@ -269,7 +271,7 @@ async def save_skills_to_db(skills_data: list):
                 category = await map_category(skill_data)
 
                 # 生成安装命令
-                install_cmd = f"claude skill install {github_url}" if github_url else ''
+                install_cmd = f"/skills add {github_url}" if github_url else ''
 
                 # 准备��能数据字典
                 skill_dict = {

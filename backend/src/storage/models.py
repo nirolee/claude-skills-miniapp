@@ -30,15 +30,46 @@ class Base(DeclarativeBase):
 class SkillCategory(str, enum.Enum):
     """技能分类枚举"""
 
-    DEBUGGING = "debugging"
-    TESTING = "testing"
-    AUTOMATION = "automation"
-    DEVELOPMENT = "development"
-    DOCUMENTATION = "documentation"
-    DESIGN = "design"
-    DATA_ANALYSIS = "data_analysis"
-    DEVOPS = "devops"
-    OTHER = "other"
+    # 开发相关
+    FRONTEND = "frontend"  # 前端开发 (React, Vue, CSS, UI)
+    BACKEND = "backend"  # 后端开发 (API, 数据库, 服务器)
+    FULLSTACK = "fullstack"  # 全栈开发
+    MOBILE = "mobile"  # 移动开发 (iOS, Android, React Native)
+
+    # 质量保证
+    TESTING = "testing"  # 测试 (单元测试, 集成测试)
+    DEBUGGING = "debugging"  # 调试和问题排查
+    CODE_REVIEW = "code_review"  # 代码审查
+
+    # 工具和流程
+    DEVOPS = "devops"  # DevOps (CI/CD, Docker, K8s)
+    AUTOMATION = "automation"  # 自动化脚本
+    BUILD_TOOLS = "build_tools"  # 构建工具 (webpack, vite)
+
+    # 文档和设计
+    DOCUMENTATION = "documentation"  # 文档编写
+    DESIGN = "design"  # UI/UX 设计
+    ARCHITECTURE = "architecture"  # 系统架构设计
+
+    # 数据和AI
+    DATA_SCIENCE = "data_science"  # 数据科学
+    MACHINE_LEARNING = "machine_learning"  # 机器学习/AI
+    DATABASE = "database"  # 数据库相关
+
+    # 语言相关
+    PYTHON = "python"  # Python 专用
+    JAVASCRIPT = "javascript"  # JavaScript/TypeScript
+    JAVA = "java"  # Java/Kotlin
+    CPP = "cpp"  # C/C++
+    GO = "go"  # Go
+    RUST = "rust"  # Rust
+
+    # 其他
+    SECURITY = "security"  # 安全相关
+    PERFORMANCE = "performance"  # 性能优化
+    SKILL_MANAGEMENT = "skill_management"  # 技能管理
+    GENERAL = "general"  # 通用工具
+    OTHER = "other"  # 其他
 
 
 class SkillStatus(str, enum.Enum):
@@ -61,7 +92,7 @@ class Skill(Base):
     name: Mapped[str] = mapped_column(String(200), nullable=False, index=True)
     name_zh: Mapped[Optional[str]] = mapped_column(String(200))  # 中文名称
     slug: Mapped[str] = mapped_column(
-        String(200), nullable=False, unique=True, index=True
+        String(500), nullable=False, unique=True, index=True
     )
     description: Mapped[str] = mapped_column(Text, nullable=False)
     description_zh: Mapped[Optional[str]] = mapped_column(Text)  # 中文描述
