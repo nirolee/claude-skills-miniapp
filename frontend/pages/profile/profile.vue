@@ -10,7 +10,8 @@
           <input
             class="user-name-input"
             type="nickname"
-            :value="userInfo.nickname || '点击设置昵称'"
+            :value="userInfo.nickname || ''"
+            @input="onNicknameInput"
             @blur="onNicknameBlur"
             placeholder="点击设置昵称"
           />
@@ -109,7 +110,8 @@ export default {
       pageSize: 20,
       hasMore: true,
       loading: false,
-      defaultAvatar: 'https://avatars.githubusercontent.com/u/1?v=4'
+      defaultAvatar: 'https://avatars.githubusercontent.com/u/1?v=4',
+      tempNickname: '' // 临时保存输入的昵称
     }
   },
 
@@ -158,18 +160,46 @@ export default {
       }
     },
 
+    // 昵称输入事件
+    onNicknameInput(e) {
+      this.tempNickname = e.detail.value
+    },
+
     // 昵称输入框失焦
     async onNicknameBlur(e) {
-      const nickname = e.detail.value.trim()
-      if (!nickname || nickname === this.userInfo.nickname) {
+      const nickname = this.tempNickname.trim() || e.detail.value.trim()
+
+      console.log('昵称失焦:', nickname)
+      console.log('当前用户信息:', this.userInfo)
+
+      if (!nickname) {
+        console.log('昵称为空，不更新')
+        return
+      }
+
+      if (nickname === this.userInfo.nickname) {
+        console.log('昵称未改变，不更新')
+        return
+      }
+
+      if (!this.userInfo || !this.userInfo.user_id) {
+        console.error('用户未登录或 user_id 不存在')
+        uni.showToast({
+          title: '请先登录',
+          icon: 'none'
+        })
         return
       }
 
       try {
+        console.log('开始更新昵称，user_id:', this.userInfo.user_id)
+
         // 调用后端API更新昵称
         const res = await updateUserProfile(this.userInfo.user_id, {
           nickname
         })
+
+        console.log('更新成功，响应:', res)
 
         // 更新本地用户信息
         this.userInfo.nickname = nickname
@@ -182,8 +212,9 @@ export default {
       } catch (error) {
         console.error('更新昵称失败', error)
         uni.showToast({
-          title: '更新失败',
-          icon: 'none'
+          title: '更新失败: ' + (error.message || '未知错误'),
+          icon: 'none',
+          duration: 3000
         })
       }
     },
