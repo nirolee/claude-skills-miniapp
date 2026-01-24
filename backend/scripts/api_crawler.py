@@ -232,7 +232,7 @@ async def save_skills_to_db(skills_data: list):
                     category=SkillCategory.GENERAL,  # 需要根据实际分类映射
                     tags=skill_data.get('tags', []),
                     content=html.unescape(content) if content else '',
-                    install_command=f"claude skill install {skill_data.get('github_url', '')}",
+                    install_command=f"/skills add {skill_data.get('github_url', '')}",
                     status='active',
                     is_official=skill_data.get('is_official', False)
                 )

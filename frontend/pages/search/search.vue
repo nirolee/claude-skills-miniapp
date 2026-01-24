@@ -129,6 +129,7 @@
 
 <script>
 import { getSkillsList, getCategories } from '../../utils/api.js'
+import { getCurrentLanguage, updateTabBarLanguage } from '../../utils/language.js'
 
 export default {
   data() {
@@ -168,9 +169,37 @@ export default {
       return sortMap[this.sortBy] || '排序'
     },
   },
+  data() {
+    return {
+      searchQuery: '',
+      searchTimer: null,
+      searchHistory: [],
+      selectedCategory: 'all',
+      sortBy: 'stars',
+      categories: [],
+      hotTags: [],
+      skills: [],
+      loading: false,
+      totalSkills: 0,
+      _lastLanguage: '', // 记录上次的语言，避免重复更新
+    }
+  },
   onLoad() {
+    // 初始化 TabBar 语言
+    this._lastLanguage = getCurrentLanguage()
+    updateTabBarLanguage(this._lastLanguage)
+
     this.loadSearchHistory()
     this.loadCategories()
+  },
+
+  onShow() {
+    // 只在语言变化时更新 TabBar
+    const currentLang = getCurrentLanguage()
+    if (currentLang !== this._lastLanguage) {
+      this._lastLanguage = currentLang
+      updateTabBarLanguage(currentLang)
+    }
   },
   methods: {
     async loadCategories() {
@@ -402,6 +431,35 @@ export default {
       uni.navigateTo({
         url: `/pages/detail/detail?id=${skillId}`,
       })
+    },
+
+    /**
+     * 分享给朋友
+     */
+    onShareAppMessage() {
+      if (this.searchQuery) {
+        return {
+          title: `搜索：${this.searchQuery} - Claude Skills`,
+          path: '/pages/search/search',
+          imageUrl: '',
+        }
+      }
+      return {
+        title: 'Claude Skills - 搜索技能',
+        path: '/pages/search/search',
+        imageUrl: '',
+      }
+    },
+
+    /**
+     * 分享到朋友圈
+     */
+    onShareTimeline() {
+      return {
+        title: 'Claude Skills - 发现优质技能',
+        query: '',
+        imageUrl: '',
+      }
     },
   },
 }

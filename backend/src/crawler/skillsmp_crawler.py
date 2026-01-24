@@ -341,7 +341,7 @@ class SkillsMPCrawler:
                         continue
 
                     # 生成安装命令
-                    skill_data["install_command"] = f"claude plugin install {skill_data['github_url']}"
+                    skill_data["install_command"] = f"/skills add {skill_data['github_url']}"
 
                     # 设置默认值
                     skill_data.setdefault("forks", 0)

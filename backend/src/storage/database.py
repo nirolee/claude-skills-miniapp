@@ -141,6 +141,8 @@ class SkillRepository:
                 or_(
                     Skill.name.like(search_pattern),
                     Skill.description.like(search_pattern),
+                    Skill.name_zh.like(search_pattern),
+                    Skill.description_zh.like(search_pattern),
                 )
             )
 

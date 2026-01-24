@@ -195,8 +195,8 @@ class GitHubSkillCrawler:
         Returns:
             安装命令字符串
         """
-        # 假设使用 Claude Code 的插件安装命令
-        return f"claude plugin install {github_url}"
+        # 使用 Claude Code 的正确安装命令格式
+        return f"/skills add {github_url}"
 
     async def fetch_skills_from_github(self) -> List[Dict[str, Any]]:
         """
