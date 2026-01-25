@@ -117,7 +117,10 @@ class Skill(Base):
     skill_md_zh: Mapped[Optional[str]] = mapped_column(Text)  # 完整的 SKILL.md 中文翻译
     install_command: Mapped[str] = mapped_column(
         Text, nullable=False
-    )  # 安装命令
+    )  # 安装命令 (Linux/macOS bash)
+    install_command_windows: Mapped[Optional[str]] = mapped_column(
+        Text
+    )  # 安装命令 (Windows PowerShell)
 
     # 状态
     status: Mapped[SkillStatus] = mapped_column(

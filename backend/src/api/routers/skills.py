@@ -58,6 +58,7 @@ class SkillDetailResponse(BaseModel):
     skill_md: Optional[str] = None  # 完整的 SKILL.md 原文
     skill_md_zh: Optional[str] = None  # 完整的 SKILL.md 中文翻译
     install_command: str
+    install_command_windows: Optional[str] = None  # Windows PowerShell 安装命令
     stars: int
     forks: int
     view_count: int

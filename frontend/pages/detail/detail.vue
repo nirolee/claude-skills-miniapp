@@ -71,9 +71,25 @@
         <text class="section-title">安装命令</text>
       </view>
 
+      <!-- 系统选择标签 -->
+      <view class="os-tabs">
+        <view
+          :class="['os-tab', { active: selectedOS === 'unix' }]"
+          @click="selectOS('unix')"
+        >
+          <text class="os-tab-text">Linux/macOS</text>
+        </view>
+        <view
+          :class="['os-tab', { active: selectedOS === 'windows' }]"
+          @click="selectOS('windows')"
+        >
+          <text class="os-tab-text">Windows</text>
+        </view>
+      </view>
+
       <!-- 安装命令 -->
       <view class="install-command" @click="copyCommand">
-        <text class="command-text">{{ skill.installCommand }}</text>
+        <text class="command-text">{{ getCurrentCommand() }}</text>
         <text class="copy-icon">📋</text>
       </view>
       <text class="install-hint">点击复制安装命令</text>
@@ -137,6 +153,7 @@ export default {
       skillId: null,
       currentLang: 'zh', // 当前语言
       showZhContent: true, // Markdown 内容是否显示中文（独立于全局语言）
+      selectedOS: 'unix', // 选择的操作系统：unix 或 windows
       skill: {
         id: null,
         name: '',
@@ -155,6 +172,7 @@ export default {
         isFavorited: false,
         githubUrl: '',
         installCommand: '',
+        installCommandWindows: '',
         content: '',
         content_zh: '',
         skill_md: '',  // 完整的 SKILL.md 原文
@@ -283,7 +301,8 @@ export default {
           downloads: this.formatNumber(skillData.view_count || 0),
           isFavorited: false,
           githubUrl: skillData.github_url || '',
-          installCommand: skillData.install_command || `claude skill install ${skillData.github_url}`,
+          installCommand: skillData.install_command || `/skills add ${skillData.github_url}`,
+          installCommandWindows: skillData.install_command_windows || this.generateWindowsCommand(skillData.install_command),
           content: skillData.content || '暂无详细说明',
           content_zh: skillData.content_zh || '',
           skill_md: skillData.skill_md || '',  // 完整的 SKILL.md 原文
@@ -429,12 +448,53 @@ export default {
       }
     },
 
+    /**
+     * 生成 Windows PowerShell 安装命令
+     * 将 bash 命令转换为 PowerShell 命令
+     */
+    generateWindowsCommand(bashCommand) {
+      if (!bashCommand) return ''
+
+      // 将 bash 命令转换为 PowerShell
+      // 例如：mkdir -p ~/.claude/skills => New-Item -Path "$env:USERPROFILE\.claude\skills" -ItemType Directory -Force
+      const powershellCommand = bashCommand
+        .replace(/mkdir -p ~\//g, 'New-Item -Path "$env:USERPROFILE\\')
+        .replace(/cd ~\//g, 'Set-Location "$env:USERPROFILE\\')
+        .replace(/&&/g, ';')
+        .replace(/;(?!\s*$)/g, '; ')
+        .trim()
+
+      return powershellCommand || bashCommand
+    },
+
+    /**
+     * 选择操作系统
+     */
+    selectOS(os) {
+      this.selectedOS = os
+    },
+
+    /**
+     * 获取当前选择的安装命令
+     */
+    getCurrentCommand() {
+      if (this.selectedOS === 'windows' && this.skill.installCommandWindows) {
+        return this.skill.installCommandWindows
+      }
+      return this.skill.installCommand
+    },
+
+    /**
+     * 复制安装命令
+     */
     copyCommand() {
+      const command = this.getCurrentCommand()
       uni.setClipboardData({
-        data: this.skill.installCommand,
+        data: command,
         success: () => {
+          const osName = this.selectedOS === 'windows' ? 'Windows' : 'Linux/macOS'
           uni.showToast({
-            title: '已复制到剪贴板',
+            title: `已复制 ${osName} 安装命令`,
             icon: 'success',
           })
         },
@@ -811,6 +871,48 @@ export default {
 }
 
 /* 安装命令区域 */
+/* 操作系统选择标签 */
+.os-tabs {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 24rpx;
+  padding: 8rpx;
+  background: rgba(0, 217, 255, 0.05);
+  border-radius: 16rpx;
+  border: 1rpx solid rgba(0, 217, 255, 0.2);
+}
+
+.os-tab {
+  flex: 1;
+  padding: 16rpx 24rpx;
+  text-align: center;
+  background: transparent;
+  border-radius: 12rpx;
+  transition: all 0.3s;
+  cursor: pointer;
+
+  &.active {
+    background: rgba(0, 217, 255, 0.2);
+    border: 1rpx solid rgba(0, 217, 255, 0.5);
+    box-shadow: 0 0 16rpx rgba(0, 217, 255, 0.2);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.os-tab-text {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+  font-weight: 500;
+
+  .os-tab.active & {
+    color: var(--neon-cyan);
+    font-weight: 600;
+  }
+}
+
 .install-command {
   display: flex;
   align-items: center;
