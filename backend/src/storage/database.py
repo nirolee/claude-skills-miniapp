@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
 )
-from sqlalchemy import select, func, update, delete, and_, or_, desc
+from sqlalchemy import select, func, update, delete, and_, or_, desc, text
 from sqlalchemy.orm import selectinload
 
 from ..config import get_settings
@@ -136,14 +136,14 @@ class SkillRepository:
             conditions.append(Skill.is_official == is_official)
 
         if search_keyword:
-            search_pattern = f"%{search_keyword}%"
+            # 先尝试 FULLTEXT 全文索引搜索（快）
+            # 如果无结果则回退到 name LIKE
             conditions.append(
-                or_(
-                    Skill.name.like(search_pattern),
-                    Skill.description.like(search_pattern),
-                    Skill.name_zh.like(search_pattern),
-                    Skill.description_zh.like(search_pattern),
-                )
+                text(
+                    "MATCH(skills.name, skills.description, skills.name_zh, skills.description_zh) "
+                    "AGAINST(:kw IN BOOLEAN MODE)"
+                # BOOLEAN MODE 中 - + * 等是操作符，转义特殊字符
+                ).bindparams(kw='"' + search_keyword + '"')
             )
 
         # 查询总数
@@ -166,6 +166,27 @@ class SkillRepository:
 
         result = await self.session.execute(query)
         skills = result.scalars().all()
+
+        # FULLTEXT 无结果时（词太短 < ft_min_word_len），回退到 name LIKE
+        if not skills and search_keyword and total_count == 0:
+            fallback = [Skill.status == status]
+            if category:
+                fallback.append(Skill.category == category)
+            if is_official is not None:
+                fallback.append(Skill.is_official == is_official)
+            fallback.append(Skill.name.like("%" + search_keyword + "%"))
+
+            count_query = select(func.count(Skill.id)).where(and_(*fallback))
+            total_result = await self.session.execute(count_query)
+            total_count = total_result.scalar()
+
+            query = select(Skill).where(and_(*fallback))
+            if hasattr(Skill, order_by):
+                order_column = getattr(Skill, order_by)
+                query = query.order_by(desc(order_column) if order_desc else order_column)
+            query = query.offset(offset).limit(limit)
+            result = await self.session.execute(query)
+            skills = result.scalars().all()
 
         return list(skills), total_count
 
