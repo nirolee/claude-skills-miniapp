@@ -9,7 +9,6 @@ import sys
 from pathlib import Path
 import sys
 import io
-import aiohttp
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -26,6 +25,48 @@ logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+import re as _re
+
+def _generate_install_commands(github_url):
+    """从 GitHub tree URL 生成正确的 git sparse-checkout 安装命令"""
+    if not github_url:
+        return '', None
+    m = _re.match(r'https://github\.com/([^/]+)/([^/]+)/tree/([^/]+)/(.+)', github_url)
+    if not m:
+        return '', None
+    owner, repo, branch, path = m.groups()
+    path = path.rstrip('/')
+    skill_name = path.split('/')[-1]
+    repo_url = "https://github.com/{}/{}".format(owner, repo)
+    backslash = "\\"
+    ps_path = path.replace('/', backslash)
+    bash = "; ".join([
+        "mkdir -p ~/.claude/skills",
+        "cd ~/.claude/skills",
+        "git clone --depth 1 --branch {} --filter=blob:none --sparse {} .temp-install".format(branch, repo_url),
+        "cd .temp-install",
+        "git sparse-checkout set {}".format(path),
+        "mkdir -p ~/.claude/skills/{}".format(skill_name),
+        "cp -r {}/* ~/.claude/skills/{}/".format(path, skill_name),
+        "cd ..",
+        "rm -rf .temp-install",
+        'echo "✅ Skill 安装成功: {}"'.format(skill_name),
+    ])
+    win = "; ".join([
+        'New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude\skills"',
+        'Set-Location "$env:USERPROFILE\.claude\skills"',
+        "git clone --depth 1 --branch {} --filter=blob:none --sparse {} .temp-install".format(branch, repo_url),
+        "Set-Location .temp-install",
+        "git sparse-checkout set {}".format(path),
+        'New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\.claude\skills\{}"'.format(skill_name),
+        'Copy-Item -Recurse -Path "{}\*" -Destination "$env:USERPROFILE\.claude\skills\\\\"'.format(ps_path),
+        'Set-Location "$env:USERPROFILE\.claude\skills"',
+        "Remove-Item -Recurse -Force .temp-install",
+        'Write-Host "✅ Skill 安装成功: {}"'.format(skill_name),
+    ])
+    return bash, win
+
+
 logger = logging.getLogger(__name__)
 
 
@@ -154,69 +195,6 @@ def classify_skill(name: str, description: str, tags: list = None) -> SkillCateg
     if scores:
         return max(scores, key=scores.get)
     return SkillCategory.OTHER
-
-
-async def fetch_skill_content_from_github(github_url: str) -> str:
-    """
-    从 GitHub 获取 SKILL.md 完整内容
-
-    Args:
-        github_url: GitHub 仓库 URL
-        例如: https://github.com/anthropics/skills/tree/main/skills/debugging/debug-code
-
-    Returns:
-        SKILL.md 的完整内容，失败返回空字符串
-    """
-    if not github_url or 'github.com' not in github_url:
-        return ''
-
-    try:
-        # 将 GitHub 页面 URL 转换为 raw content URL
-        # 例如: https://github.com/anthropics/skills/tree/main/skills/debugging/debug-code
-        # 转为: https://raw.githubusercontent.com/anthropics/skills/main/skills/debugging/debug-code/SKILL.md
-
-        # 提取路径部分
-        if '/tree/' in github_url:
-            # 格式: https://github.com/{owner}/{repo}/tree/{branch}/{path}
-            parts = github_url.split('/tree/')
-            if len(parts) == 2:
-                base_url = parts[0]  # https://github.com/{owner}/{repo}
-                branch_and_path = parts[1]  # main/skills/debugging/debug-code
-
-                # 分离 branch 和 path
-                path_parts = branch_and_path.split('/', 1)
-                if len(path_parts) == 2:
-                    branch = path_parts[0]  # main
-                    path = path_parts[1]    # skills/debugging/debug-code
-
-                    # 从 base_url 提取 owner 和 repo
-                    base_parts = base_url.replace('https://github.com/', '').split('/')
-                    if len(base_parts) >= 2:
-                        owner = base_parts[0]
-                        repo = base_parts[1]
-
-                        # 构造 raw URL
-                        raw_url = f'https://raw.githubusercontent.com/{owner}/{repo}/{branch}/{path}/SKILL.md'
-
-                        # 使用 aiohttp 获取内容
-                        timeout = aiohttp.ClientTimeout(total=30)
-                        async with aiohttp.ClientSession(timeout=timeout) as session:
-                            async with session.get(raw_url) as response:
-                                if response.status == 200:
-                                    content = await response.text()
-                                    logger.info(f"  ✅ 获取 SKILL.md 成功: {len(content)} 字符")
-                                    return content
-                                else:
-                                    logger.warning(f"  ⚠️ 获取 SKILL.md 失败: HTTP {response.status}")
-                                    return ''
-
-        # 如果 URL 格式不匹配，返回空
-        logger.warning(f"  ⚠️ 无法解析 GitHub URL: {github_url}")
-        return ''
-
-    except Exception as e:
-        logger.error(f"  ❌ 获取 SKILL.md 出错: {e}")
-        return ''
 
 
 async def smart_crawl(start_page=1, max_pages=100):
@@ -397,15 +375,6 @@ async def save_skills_incremental(skills):
                 # 智能分类
                 category = classify_skill(name, description, skill.get('tags', []))
 
-                # 从 GitHub 获取完整的 SKILL.md 内容
-                logger.info(f"  正在获取 {name} 的完整内容...")
-                content = await fetch_skill_content_from_github(github_url)
-
-                # 如果获取失败，使用 description 作为后备
-                if not content or len(content) < 50:
-                    logger.warning(f"  ⚠️ 使用 description 作为内容")
-                    content = description
-
                 skill_dict = {
                     'name': name,
                     'slug': slug,
@@ -416,8 +385,9 @@ async def save_skills_incremental(skills):
                     'forks': forks,
                     'category': category,
                     'tags': [],
-                    'content': content,  # 使用完整内容
-                    'install_command': f'/skills add {github_url}' if github_url else '',
+                    'content': description,
+                    'install_command': _generate_install_commands(github_url)[0],
+                    'install_command_windows': _generate_install_commands(github_url)[1],
                     'status': 'active',
                     'is_official': skill.get('hasMarketplace', False)
                 }
@@ -425,7 +395,7 @@ async def save_skills_incremental(skills):
                 existing = await repo.get_by_slug(slug)
 
                 if existing:
-                    # 只更新 stars/forks/content（如果 content 更完整）
+                    # 只更新 stars/forks
                     update_data = {}
                     if existing.stars != stars:
                         update_data['stars'] = stars
@@ -433,10 +403,6 @@ async def save_skills_incremental(skills):
                         update_data['forks'] = forks
                     if existing.github_url != github_url and github_url:
                         update_data['github_url'] = github_url
-                    # 如果新的 content 更长，更新它
-                    if len(content) > len(existing.content):
-                        update_data['content'] = content
-                        logger.info(f"  📝 更新内容: {len(existing.content)} → {len(content)} ��符")
 
                     if update_data:
                         await repo.update(existing.id, update_data)
