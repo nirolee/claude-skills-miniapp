@@ -143,7 +143,7 @@ async def translate_single_skill(skill, tracker, semaphore, skill_index, total):
             return False, str(e)
 
 
-async def continuous_translate(batch_size: int = 50, concurrency: int = 10):
+async def continuous_translate(batch_size: int = 50, concurrency: int = 10, daily_limit: int = 3000):
     """
     持续翻译任务
 
@@ -167,6 +167,23 @@ async def continuous_translate(batch_size: int = 50, concurrency: int = 10):
     start_time = time.time()
     total_processed = 0
     offset = 0
+
+    # 读取今日已翻译数量（基于 progress_file 中的 daily_count）
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    daily_done = 0
+    if tracker.data.get('daily_date') == today_str:
+        daily_done = tracker.data.get('daily_count', 0)
+    else:
+        # 新的一天，重置计数
+        tracker.data['daily_date'] = today_str
+        tracker.data['daily_count'] = 0
+        await tracker.save()
+
+    if daily_done >= daily_limit:
+        logger.info(f"📅 今日已翻译 {daily_done} 条，达到每日限额 {daily_limit}，退出。")
+        return
+
+    logger.info(f"📅 今日进度: {daily_done}/{daily_limit}，还可翻译 {daily_limit - daily_done} 条")
 
     # 先查一次总数，仅用于显示进度
     async with get_session() as session:
@@ -231,6 +248,14 @@ async def continuous_translate(batch_size: int = 50, concurrency: int = 10):
         if len(rate_limit_errors) > batch_size * 0.3:
             logger.warning(f"⏳ 速率限制，等待 60 秒...")
             await asyncio.sleep(60)
+
+        # 更新今日计数，检查每日限额
+        daily_done += batch_success
+        tracker.data['daily_count'] = daily_done
+        await tracker.save()
+        if daily_done >= daily_limit:
+            logger.info(f"\n📅 今日已翻译 {daily_done} 条，达到每日限额 {daily_limit}，停止。明日继续。")
+            break
 
         offset += batch_size
 
