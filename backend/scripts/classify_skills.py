@@ -60,7 +60,10 @@ CATEGORY_KEYWORDS = {
     ],
     SkillCategory.AUTOMATION: [
         'automation', 'script', 'automate', 'workflow', 'cron',
-        'scheduled', 'batch', 'task runner', 'orchestration'
+        'scheduled', 'batch', 'task runner', 'orchestration',
+        'slack', 'github', 'notion', 'jira', 'linear', 'trello',
+        'calendar', 'reminder', 'notification', 'webhook', 'trigger',
+        'zapier', 'make', 'n8n', 'integrat'
     ],
     SkillCategory.BUILD_TOOLS: [
         'build', 'webpack', 'vite', 'rollup', 'bundler', 'compiler',
@@ -124,27 +127,24 @@ CATEGORY_KEYWORDS = {
     ],
     SkillCategory.GENERAL: [
         'utility', 'helper', 'tool', 'generator', 'converter',
-        'formatter', 'validator', 'parser', 'cli'
+        'formatter', 'validator', 'parser', 'cli',
+        'fetch', 'search', 'lookup', 'query', 'summarize', 'extract',
+        'weather', 'translate', 'notes', 'browser', 'screenshot',
+        'file', 'image', 'audio', 'video', 'pdf', 'csv', 'json',
+        'manage', 'control', 'monitor', 'capture', 'stream'
     ],
 }
 
 
-def classify_skill(name: str, description: str, tags: list = None) -> SkillCategory:
-    """
-    智能分类技能
-
-    Args:
-        name: 技能名称
-        description: 技能描述
-        tags: 标签列表
-
-    Returns:
-        SkillCategory: 分类结果
-    """
-    # 合并所有文本
-    text = f"{name} {description}"
+def classify_skill(name: str, description: str, tags: list = None, skill_md: str = None) -> SkillCategory:
+    """智能分类技能，综合 name/description/tags/skill_md"""
+    # name 和 description 权重高，重复3次增加权重
+    text = f"{name} {name} {name} {description} {description}"
     if tags:
         text += " " + " ".join(tags)
+    # skill_md 内容丰富但噪音多，只取前 500 字符
+    if skill_md:
+        text += " " + skill_md[:500]
 
     text = text.lower()
 
@@ -171,52 +171,69 @@ def classify_skill(name: str, description: str, tags: list = None) -> SkillCateg
 
 
 async def reclassify_all_skills():
-    """重新分类所有技能"""
+    """重新分类所有技能，分页处理全量数据"""
+    from sqlalchemy import text as sa_text
     logger.info("=== 智能分类器 ===\n")
 
+    PAGE_SIZE = 500
+    offset = 0
+    category_stats = {}
+    update_count = 0
+    total_processed = 0
+
+    # 先查总数
     async with get_session() as session:
-        repo = SkillRepository(session)
+        result = await session.execute(sa_text("SELECT COUNT(*) FROM skills"))
+        grand_total = result.scalar()
+    logger.info(f"总技能数: {grand_total}，开始分页重新分类...\n")
 
-        # 获取所有技能
-        skills, total = await repo.list(limit=20000, offset=0)
-        logger.info(f"找到 {total} 个技能，开始重新分类...\n")
+    while True:
+        async with get_session() as session:
+            result = await session.execute(sa_text("""
+                SELECT id, name, description, tags, category, skill_md
+                FROM skills
+                ORDER BY id ASC
+                LIMIT :limit OFFSET :offset
+            """), {"limit": PAGE_SIZE, "offset": offset})
+            rows = result.fetchall()
 
-        category_stats = {}
-        update_count = 0
+        if not rows:
+            break
 
-        for idx, skill in enumerate(skills):
-            try:
-                # 智能分类
-                old_category = skill.category
-                new_category = classify_skill(
-                    skill.name,
-                    skill.description or '',
-                    skill.tags or []
-                )
+        async with get_session() as session:
+            repo = SkillRepository(session)
+            for row in rows:
+                try:
+                    import json
+                    tags = row.tags if isinstance(row.tags, list) else (json.loads(row.tags) if row.tags else [])
+                    old_category = row.category
+                    new_category = classify_skill(
+                        row.name,
+                        row.description or '',
+                        tags,
+                        row.skill_md
+                    )
 
-                # 只在分类变化时更新
-                if old_category != new_category:
-                    await repo.update(skill.id, {'category': new_category})
-                    update_count += 1
+                    if str(old_category) != str(new_category) and str(old_category) != new_category.value:
+                        await repo.update(row.id, {'category': new_category})
+                        update_count += 1
 
-                # 统计
-                category_stats[new_category] = category_stats.get(new_category, 0) + 1
+                    category_stats[new_category.value] = category_stats.get(new_category.value, 0) + 1
+                    total_processed += 1
 
-                if (idx + 1) % 500 == 0:
-                    logger.info(f"  进度: {idx+1}/{total} ({(idx+1)/total*100:.1f}%)")
+                except Exception as e:
+                    logger.error(f"分类失败: {row.name}, {e}")
 
-            except Exception as e:
-                logger.error(f"分类失败: {skill.name}, {e}")
+        offset += PAGE_SIZE
+        logger.info(f"  进度: {total_processed}/{grand_total} ({total_processed/grand_total*100:.1f}%) 已更新: {update_count}")
 
-        logger.info(f"\n✅ 分类完成！")
-        logger.info(f"  更新数量: {update_count}")
-        logger.info(f"\n📊 分类统计:")
-
-        # 按数量排序显示
-        sorted_stats = sorted(category_stats.items(), key=lambda x: x[1], reverse=True)
-        for category, count in sorted_stats:
-            percentage = count / total * 100
-            logger.info(f"  {category.value:20s}: {count:5d} ({percentage:5.1f}%)")
+    logger.info(f"\n✅ 分类完成！")
+    logger.info(f"  总处理: {total_processed}，更新: {update_count}")
+    logger.info(f"\n📊 分类统计:")
+    sorted_stats = sorted(category_stats.items(), key=lambda x: x[1], reverse=True)
+    for category, count in sorted_stats:
+        percentage = count / total_processed * 100 if total_processed else 0
+        logger.info(f"  {category:20s}: {count:5d} ({percentage:5.1f}%)")
 
 
 async def main():
