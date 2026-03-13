@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-改进的爬虫 - 使用更智能的策略避免限流
+改进的爬虫 - 使用 cookie 注入绕过 Cloudflare，直接 httpx 请求
 """
 import asyncio
-from playwright.async_api import async_playwright
+from curl_cffi.requests import AsyncSession
 import sys
 from pathlib import Path
 import sys
@@ -17,6 +17,9 @@ from src.storage.database import get_session, SkillRepository
 from src.storage.models import SkillCategory
 import logging
 import random
+
+# Cookie 文件路径（Netscape 格式，由浏览器导出）
+COOKIE_FILE = Path(__file__).parent / 'skillsmp_cookies.txt'
 
 # 导入分类器
 import re
@@ -197,155 +200,91 @@ def classify_skill(name: str, description: str, tags: list = None) -> SkillCateg
     return SkillCategory.OTHER
 
 
+def load_cookies_from_file(cookie_file: Path) -> dict:
+    """从 Netscape 格式 cookie 文件加载 cookies"""
+    cookies = {}
+    if not cookie_file.exists():
+        logger.error(f"Cookie 文件不存��: {cookie_file}")
+        return cookies
+    with open(cookie_file, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            parts = line.split('\t')
+            if len(parts) >= 7:
+                name = parts[5]
+                value = parts[6]
+                cookies[name] = value
+    logger.info(f"加载 {len(cookies)} 个 cookies，包含 cf_clearance: {'cf_clearance' in cookies}")
+    return cookies
+
+
 async def smart_crawl(start_page=1, max_pages=100):
-    """智能爬取策略"""
-    logger.info("=== 智能爬虫 v2.0 ===\n")
+    """直接 httpx 请求 + cookie 注入，绕过 Cloudflare"""
+    logger.info("=== 智能爬虫 v3.0 (httpx + cookie) ===\n")
 
-    async with async_playwright() as p:
-        # 使用更真实的浏览器配置
-        browser = await p.chromium.launch(
-            headless=True,
-            args=[
-                '--disable-blink-features=AutomationControlled',
-                '--disable-dev-shm-usage',
-            ]
-        )
+    cookies = load_cookies_from_file(COOKIE_FILE)
+    if 'cf_clearance' not in cookies:
+        logger.error("❌ 未找到 cf_clearance cookie，请重新导出浏览器 cookie 到 skillsmp_cookies.txt")
+        return []
 
-        context = await browser.new_context(
-            user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-            viewport={'width': 1920, 'height': 1080},
-            locale='zh-CN',
-            timezone_id='Asia/Shanghai',
-        )
+    all_skills = []
+    page_num = start_page
+    consecutive_failures = 0
+    success_count = 0
 
-        # 隐藏 webdriver 特征
-        await context.add_init_script("""
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined
-            });
-        """)
+    logger.info(f"开始从第 {start_page} 页抓取，目标: 第 {max_pages} 页\n")
 
-        page = await context.new_page()
+    async with AsyncSession(impersonate='chrome131') as client:
+        while page_num <= max_pages and consecutive_failures < 5:
+            try:
+                delay = random.uniform(1.0, 3.0)
+                await asyncio.sleep(delay)
 
-        try:
-            logger.info("访问 SkillsMP...")
-            await page.goto('https://skillsmp.com/zh', wait_until='domcontentloaded', timeout=60000)
+                url = f'https://skillsmp.com/api/skills?page={page_num}&limit=100&sortBy=updatedAt&marketplaceOnly=false'
+                logger.info(f"请求第 {page_num} 页...")
 
-            # 等待页面完全加载
-            logger.info("等待页面初始化...")
-            await asyncio.sleep(8)
+                resp = await client.get(url, cookies=cookies, headers={'Referer': 'https://skillsmp.com/'})
 
-            # 滚动到底部触发懒加载
-            logger.info("模拟滚动浏览...")
-            for i in range(3):
-                await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
-                await asyncio.sleep(random.uniform(1.5, 3.0))  # 随机延迟
-
-            # 再等待一会儿让 JavaScript 完成初始化
-            await asyncio.sleep(5)
-
-            # 现在开始抓取
-            all_skills = []
-            page_num = start_page
-            consecutive_failures = 0
-            success_count = 0
-
-            logger.info(f"\n开始从第 {start_page} 页抓取...\n")
-
-            while page_num <= max_pages and consecutive_failures < 3:
-                try:
-                    # 每次请求前随机延迟 2-5 秒
-                    delay = random.uniform(2.0, 5.0)
-                    logger.info(f"等待 {delay:.1f} 秒...")
-                    await asyncio.sleep(delay)
-
-                    # 尝试多种 API 调用方式
-                    api_url = f'/api/skills?page={page_num}&limit=100&sortBy=updatedAt&marketplaceOnly=false'
-
-                    logger.info(f"请求第 {page_num} 页...")
-
-                    result = await page.evaluate(f"""
-                        async () => {{
-                            try {{
-                                const response = await fetch('{api_url}', {{
-                                    method: 'GET',
-                                    headers: {{
-                                        'Accept': 'application/json',
-                                        'Content-Type': 'application/json',
-                                    }},
-                                    credentials: 'include'
-                                }});
-
-                                if (!response.ok) {{
-                                    return {{
-                                        error: true,
-                                        status: response.status,
-                                        statusText: response.statusText
-                                    }};
-                                }}
-
-                                const data = await response.json();
-                                return {{
-                                    success: true,
-                                    data: data
-                                }};
-                            }} catch(e) {{
-                                return {{ error: true, message: e.toString() }};
-                            }}
-                        }}
-                    """)
-
-                    if result.get('error'):
-                        logger.warning(f"  [!] 第 {page_num} 页失败: {result.get('status', '')} {result.get('message', '')}")
-                        consecutive_failures += 1
-
-                        # 如果是 403，等待更长时间
-                        if result.get('status') == 403:
-                            wait_time = random.uniform(30, 60)
-                            logger.warning(f"  遇到限流，等待 {wait_time:.0f} 秒...")
-                            await asyncio.sleep(wait_time)
-
-                        page_num += 1
-                        continue
-
-                    # 成功获取数据
-                    data = result.get('data', {})
-                    items = data.get('items', []) or data.get('skills', [])
-                    total = data.get('totalCount', 0)
-
-                    if not items:
-                        logger.info(f"  第 {page_num} 页无数据")
-                        consecutive_failures += 1
-                    else:
-                        logger.info(f"  [OK] 第 {page_num} 页: {len(items)} 条 (总计: {total})")
-                        all_skills.extend(items)
-                        success_count += 1
-                        consecutive_failures = 0
-
-                    page_num += 1
-
-                    # 每 10 页保存一次
-                    if success_count > 0 and success_count % 10 == 0:
-                        logger.info(f"\n--- 已抓取 {len(all_skills)} 条，保存中... ---")
-                        await save_skills_incremental(all_skills)
-                        all_skills = []  # 清空已保存的
-
-                except Exception as e:
-                    logger.error(f"  第 {page_num} 页异常: {e}")
+                if resp.status_code == 403:
+                    logger.error(f"  ❌ 403 Forbidden - cf_clearance 已过期，请重新导出 cookie")
+                    logger.error(f"     请从浏览器重新导出 skillsmp.com 的 cookie 到 skillsmp_cookies.txt")
+                    break
+                elif resp.status_code != 200:
+                    logger.warning(f"  [!] 第 {page_num} 页 HTTP {resp.status_code}")
                     consecutive_failures += 1
                     page_num += 1
+                    continue
 
-            await browser.close()
+                data = resp.json()
+                items = data.get('items', []) or data.get('skills', [])
+                total = data.get('totalCount', 0)
 
-            logger.info(f"\n总计抓取: {len(all_skills)} 条")
-            return all_skills
+                if not items:
+                    logger.info(f"  第 {page_num} 页无数据，已到末尾")
+                    consecutive_failures += 1
+                else:
+                    logger.info(f"  ✅ 第 {page_num} 页: {len(items)} 条 (数据源总计: {total})")
+                    all_skills.extend(items)
+                    success_count += 1
+                    consecutive_failures = 0
 
-        except Exception as e:
-            logger.error(f"爬虫失败: {e}")
-            import traceback
-            traceback.print_exc()
-            await browser.close()
-            return []
+                page_num += 1
+
+                # 每 20 页保存一次，避免内存积压
+                if success_count > 0 and success_count % 20 == 0:
+                    logger.info(f"\n--- 已抓取 {len(all_skills)} 条，保存中... ---")
+                    await save_skills_incremental(all_skills)
+                    all_skills = []
+
+            except Exception as e:
+                logger.error(f"  第 {page_num} 页异常: {e}")
+                consecutive_failures += 1
+                page_num += 1
+
+    logger.info(f"\n本轮抓取完成，缓冲 {len(all_skills)} 条待保存")
+    return all_skills
 
 
 async def save_skills_incremental(skills):
