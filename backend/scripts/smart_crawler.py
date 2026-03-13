@@ -420,18 +420,58 @@ async def save_skills_incremental(skills):
 
 
 async def main():
-    """主函数"""
+    """主函数 - 断点续传，持续抓取全量数据，不覆盖已有内容"""
+    import json as _json
     from datetime import datetime
     logger.info(f"开始时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
 
-    # 从第 1 页开始，最多抓取 100 页
-    skills = await smart_crawl(start_page=1, max_pages=100)
+    # 读取断点
+    progress_file = Path(__file__).parent / 'crawler_progress.json'
+    start_page = 1
+    if progress_file.exists():
+        try:
+            d = _json.loads(progress_file.read_text())
+            start_page = max(1, d.get('current_page', 1))
+            logger.info(f'断点续传，从第 {start_page} 页开始')
+        except Exception:
+            pass
 
-    if skills:
-        await save_skills_incremental(skills)
+    MAX_PAGES_PER_RUN = 200  # 每轮抓 200 页（2万条），防止单次运行过久
+    while True:
+        end_page = start_page + MAX_PAGES_PER_RUN - 1
+        logger.info(f'\n=== 本轮抓取第 {start_page} ~ {end_page} 页 ===')
+        skills = await smart_crawl(start_page=start_page, max_pages=end_page)
 
-    logger.info(f"\n结束时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    logger.info("完成！\n")
+        if skills:
+            await save_skills_incremental(skills)
+
+        # 保存断点
+        next_page = start_page + MAX_PAGES_PER_RUN
+        try:
+            d = {}
+            if progress_file.exists():
+                d = _json.loads(progress_file.read_text())
+            d['current_page'] = next_page
+            d['last_update'] = datetime.now().isoformat()
+            progress_file.write_text(_json.dumps(d, indent=2))
+        except Exception:
+            pass
+
+        logger.info(f'本轮完成，下轮从第 {next_page} 页开始')
+
+        if not skills:
+            logger.info('已到数据末尾，等待 1 小时后从第 1 页重新扫描...')
+            await asyncio.sleep(3600)
+            start_page = 1
+            try:
+                d = _json.loads(progress_file.read_text())
+                d['current_page'] = 1
+                progress_file.write_text(_json.dumps(d, indent=2))
+            except Exception:
+                pass
+        else:
+            start_page = next_page
+            await asyncio.sleep(10)  # 轮间休息 10 秒
 
 
 if __name__ == "__main__":
