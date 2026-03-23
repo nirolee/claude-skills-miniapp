@@ -52,3 +52,5 @@ env/
 *.tmp
 *.temp
 .cache/
+backend/scripts/skillsmp_cookies.txt
+backend/.env
